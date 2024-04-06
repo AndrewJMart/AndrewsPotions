@@ -35,10 +35,9 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
 
     # Looping through receieved barrels and adjusting values to eventually update SupaBase data
     for barrel in barrels_delivered:
-        if barrel.potion_type[1] == 100:
+        if barrel.potion_type[1] == 1:
             num_of_green_ml += barrel.ml_per_barrel * barrel.quantity
-        
-        current_gold -= barrel.price * barrel.quantity
+            current_gold -= barrel.price * barrel.quantity
 
     # Now update the global_inventory to reflect actual values
 
@@ -74,13 +73,13 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     # Basic Logic for developing wholesale purchase plan
     if number_of_potions < 10:
         for barrel in wholesale_catalog:
-            if barrel.potion_type[1] == 100 and current_gold - barrel.price >= 0:
-                    return [
-                                {
-                                    "sku": barrel.sku,
-                                    "quantity": 1,
-                                }
-                            ]
+            if barrel.potion_type[1] == 1 and current_gold - barrel.price >= 0:
+                current_gold -= barrel.price
+                return [
+                            {
+                                "sku": barrel.sku,
+                                "quantity": 1,
+                            }
+                        ]
     else:
          return []
-
