@@ -18,13 +18,15 @@ def get_catalog():
         
     number_of_green_potions = first_row[1]
 
-    return [
-            {
-                "sku": "GreenPotion",
-                "name": "green potion",
-                "quantity": number_of_green_potions,
-                "price": 50,
-                "potion_type": [0, 100, 0, 0],
-            }
-        ]
-
+    if number_of_green_potions > 0:
+        return [
+                {
+                    "sku": "greenpotion",
+                    "name": "green potion",
+                    "quantity": number_of_green_potions,
+                    "price": 50,
+                    "potion_type": [0, 100, 0, 0]
+                }
+            ]
+    else:
+        return []
