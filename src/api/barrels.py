@@ -81,5 +81,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                                 "quantity": 1
                             }
                         ]
-    else:
-         return []
+    # Old Logic: 
+    # else:
+    #      return []
+    # Note: Now simply don't return anything if not buying barrels
