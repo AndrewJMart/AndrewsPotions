@@ -59,7 +59,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
     print(wholesale_catalog)
 
-
     # Query global_inventory for initial table
     sql_to_execute = "SELECT * FROM global_inventory"
 
@@ -81,7 +80,5 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                                 "quantity": 1
                             }
                         ]
-    # Old Logic: 
-    # else:
-    #      return []
-    # Note: Now simply don't return anything if not buying barrels
+    else:
+        return []
