@@ -21,12 +21,11 @@ def get_catalog():
     if number_of_green_potions > 0:
         return [
                 {
-                    "sku": "greenpotion",
+                    "sku": "green_potion",
                     "name": "green potion",
                     "quantity": number_of_green_potions,
                     "price": 50,
                     "potion_type": [0, 100, 0, 0]
                 }
             ]
-    else:
-        return []
+    return []

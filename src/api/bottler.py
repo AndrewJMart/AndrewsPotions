@@ -74,8 +74,8 @@ def get_bottle_plan():
                     "quantity": potions_to_make
                 }
             ]
-    else:
-        return []
+    
+    return []
 
 
 if __name__ == "__main__":
