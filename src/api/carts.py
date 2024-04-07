@@ -98,7 +98,13 @@ class CartItem(BaseModel):
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
 
-    return "OK"
+    sql_to_execute = f"""
+        INSERT INTO Cart_Table (Cart_ID, item_sku, Quantity)
+        VALUES ({cart_id}, {item_sku}, {cart_item.quantity})
+    """
+
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text(sql_to_execute))
 
 
 class CartCheckout(BaseModel):
@@ -107,5 +113,39 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
+
+    # Selecting all rows that match the cart_id
+    sql_to_execute = f"""
+                    SELECT * 
+                    FROM Cart_Table
+                    WHERE cart_id = {cart_id}
+                    """
+
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        all_rows = result.fetchall()
     
-    return {"total_potions_bought": 1, "total_gold_paid": 50}
+    # Grabbing total number of green potions
+    green_potion_count_checkout = sum(all_rows[2])
+
+    # Fetch Current Values
+    sql_to_execute = "SELECT * FROM global_inventory"
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        first_row = result.fetchone()
+    
+    current_gold = first_row[3]
+    current_green_potions = first_row[1]
+
+
+    # Update Number Of Green Potions / Gold
+    sql_to_execute = f"UPDATE global_inventory SET num_green_potions = {current_green_potions - green_potion_count_checkout}"
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text(sql_to_execute))
+
+        
+    sql_to_execute = f"UPDATE global_inventory SET gold = {current_gold + cart_checkout.payment}"
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text(sql_to_execute))
+    
+    return {"total_potions_bought": green_potion_count_checkout, "total_gold_paid": cart_checkout.payment}
