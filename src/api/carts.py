@@ -168,7 +168,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         result = connection.execute(sqlalchemy.text(sql_to_execute))
 
         
-    sql_to_execute = f"UPDATE global_inventory SET gold = {current_gold + 50}"
+    sql_to_execute = f"UPDATE global_inventory SET gold = {current_gold + 5}"
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql_to_execute))
 
