@@ -116,6 +116,8 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     # with db.engine.begin() as connection:
     #     result = connection.execute(sqlalchemy.text(sql_to_execute))
 
+    return "OK"
+
 
 class CartCheckout(BaseModel):
     payment: str
@@ -148,7 +150,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     current_green_potions = first_row[1]
 
 
-    # # Update Number Of Green Potions / Gold
+    # Update Number Of Green Potions / Gold (USING MULTIPLE TABLES WILL IMPLEMENT LATER)
     # sql_to_execute = f"UPDATE global_inventory SET num_green_potions = {current_green_potions - green_potion_count_checkout}"
     # with db.engine.begin() as connection:
     #     result = connection.execute(sqlalchemy.text(sql_to_execute))
