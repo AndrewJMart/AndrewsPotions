@@ -11,22 +11,21 @@ def get_catalog():
     Each unique item combination must have only a single price.
     """
 
-    sql_to_execute = "SELECT * FROM global_inventory"
+    # Grab all available potions for catalog
+    sql_to_execute = f"SELECT * FROM potions_table WHERE quantity > 0"
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql_to_execute))
-        first_row = result.fetchone()
-        
-    number_of_green_potions = first_row[1]
+        all_rows = result.fetchall()
+    
+    # Initialize Empty Catalog Listing
+    catalog_listing = []
 
-    if number_of_green_potions > 0:
-        return [
-                {
-                    "sku": "greenpotion",
-                    "name": "green potion",
-                    "quantity": 1,
-                    "price": 5,
-                    "potion_type": [0, 100, 0, 0],
-                }
-            ]
-    else:
-        return []
+    # Iterate through each row and append this potion to catalog listing
+    for row in all_rows:
+        catalog_listing.append({
+                    "sku": row.item_sku,
+                    "name": row.item_sku,
+                    "quantity": row.quantity,
+                    "price": row.price,
+                    "potion_type": [row.red, row.green, row.blue, 0],
+                })
