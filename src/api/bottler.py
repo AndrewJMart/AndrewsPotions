@@ -20,6 +20,8 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     """ """
     print(f"potions delievered: {potions_delivered} order_id: {order_id}")
 
+    # Tested and Works V2.05
+
     inital_query = "SELECT * FROM global_inventory"
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(inital_query))
@@ -34,9 +36,9 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         potion_name = f"{potion.potion_type[0]}_{potion.potion_type[1]}_{potion.potion_type[2]}_potion"
 
         # Update MLs
-        current_red_ml -= potion.potion_type[0]
-        current_green_ml -= potion.potion_type[1]
-        current_blue_ml -= potion.potion_type[2]
+        current_red_ml -= potion.potion_type[0] * potion.quantity
+        current_green_ml -= potion.potion_type[1] * potion.quantity
+        current_blue_ml -= potion.potion_type[2] * potion.quantity
 
         # Check if a row with potion_type exists in potions_table
         select_sku = f"SELECT * FROM potions_table WHERE item_sku = '{potion_name}'"
@@ -82,6 +84,8 @@ def get_bottle_plan():
     # Each bottle has a quantity of what proportion of red, blue, and
     # green potion to add.
     # Expressed in integers from 1 to 100 that must sum up to 100.
+
+    # TESTED AND WORKS V2.05
 
     # Initial Query Of Global_Inventory 
     initial_query = "SELECT * FROM global_inventory"

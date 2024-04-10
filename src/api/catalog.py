@@ -11,6 +11,8 @@ def get_catalog():
     Each unique item combination must have only a single price.
     """
 
+    #TESTED AND WORKS V2.05
+
     # Grab all available potions for catalog
     select_stocked_potions = f"SELECT * FROM potions_table WHERE quantity > 0"
     with db.engine.begin() as connection:

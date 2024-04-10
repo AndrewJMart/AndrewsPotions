@@ -88,12 +88,15 @@ def post_visits(visit_id: int, customers: list[Customer]):
 def create_cart(new_cart: Customer):
     """ """
 
+    #TESTED AND WORKS V2.05
+
     insert_cart_row = f"""INSERT INTO carts (customer_name, character_class, level) 
     VALUES ('{new_cart.customer_name}', '{new_cart.character_class}', {new_cart.level})"""
 
     cart_id_query = f"""SELECT * FROM carts 
                         WHERE customer_name = '{new_cart.customer_name}' 
-                        AND character_class = '{new_cart.customer_name}'
+                        AND character_class = '{new_cart.character_class}'
+                        AND level = {new_cart.level}
                         ORDER BY cart_id DESC LIMIT 1"""
 
         # Execute the SQL statement with parameter binding
@@ -111,6 +114,8 @@ class CartItem(BaseModel):
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
+
+    #TESTED AND WORKS V2.05
 
     # Insert Item Quantity Along With Item_SKU and Cart_ID
     new_cart_items_row = f"""INSERT INTO cart_items (cart_id, item_sku, quantity) 

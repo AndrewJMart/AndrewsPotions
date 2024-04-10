@@ -13,6 +13,9 @@ router = APIRouter(
 @router.get("/audit")
 def get_inventory():
     """ """
+
+    #TESTED AND WORKS WITH V2.05
+
     # Query Global_Inventory for current levels of gold and ML
     ml_gold_sum_query = "SELECT * FROM global_inventory"
     with db.engine.begin() as connection:
@@ -26,7 +29,7 @@ def get_inventory():
     potion_sum_query = "SELECT SUM(quantity) AS total_potions FROM potions_table"
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(potion_sum_query))
-        total_potions = result.fetchone()['total_potions']
+        total_potions = result.fetchone().total_potions
 
     return {"number_of_potions": total_potions, "ml_in_barrels": current_ml, "gold": current_gold}
 

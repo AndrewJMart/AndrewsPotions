@@ -23,6 +23,9 @@ class Barrel(BaseModel):
 def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     """ """
     print(f"barrels delievered: {barrels_delivered} order_id: {order_id}")
+
+    #TESTED AND WORKS V2.05
+
     # Grab Initial Table
     initial_query = "SELECT * FROM global_inventory"
     with db.engine.begin() as connection:
@@ -68,6 +71,10 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
     print(wholesale_catalog)
+
+    # TESTED AND WORKS FOR NOW V2.05
+
+
     # Grab current gold and gold benchmark
     initial_query = "SELECT * FROM global_inventory"
     with db.engine.begin() as connection:
