@@ -136,7 +136,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         #Implement simple selling only green potions
         for barrel in wholesale_catalog:    
             # Check if barrel is green
-            if barrel.potion_type[1] == 1 and current_gold >= barrel.price:
+            if barrel.potion_type[1] == 1 and current_gold >= barrel.price and "MINI" not in barrel.sku:
                 # Acquire max amount of said barrel
                 max_purchasable_amount = 1
                 
@@ -158,7 +158,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         if red_potion_quantity <= red_benchmark:
             for barrel in wholesale_catalog:
                 # Check if barrel is red
-                if barrel.potion_type[0] == 1 and current_gold >= barrel.price:
+                if barrel.potion_type[0] == 1 and current_gold >= barrel.price and "MINI" not in barrel.sku:
                     # Acquire max amount of said barrel
                     max_purchasable_amount = 1
                     
@@ -179,7 +179,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             # Purchase Max Amount of blue barrels
             for barrel in wholesale_catalog:
                 # Check if barrel is blue
-                if barrel.potion_type[2] == 1 and current_gold >= barrel.price:
+                if barrel.potion_type[2] == 1 and current_gold >= barrel.price and "MINI" not in barrel.sku:
                     # Acquire max amount of said barrel
                     max_purchasable_amount = 1
                     
