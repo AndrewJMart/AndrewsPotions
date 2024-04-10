@@ -88,18 +88,18 @@ def post_visits(visit_id: int, customers: list[Customer]):
 def create_cart(new_cart: Customer):
     """ """
 
-    sql_to_execute = f"""INSERT INTO carts (customer_name, character_class, level) 
+    insert_cart_row = f"""INSERT INTO carts (customer_name, character_class, level) 
     VALUES ('{new_cart.customer_name}', '{new_cart.character_class}', {new_cart.level})"""
 
-    sql_to_execute2 = f"""SELECT * FROM carts 
+    cart_id_query = f"""SELECT * FROM carts 
                         WHERE customer_name = '{new_cart.customer_name}' 
                         AND character_class = '{new_cart.customer_name}'
                         ORDER BY cart_id DESC LIMIT 1"""
 
         # Execute the SQL statement with parameter binding
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
-        cart_id = connection.execute(sqlalchemy.text(sql_to_execute2)).fetchone().cart_id
+        result = connection.execute(sqlalchemy.text(insert_cart_row))
+        cart_id = connection.execute(sqlalchemy.text(cart_id_query)).fetchone().cart_id
 
     return {"cart_id": cart_id}
 
@@ -113,12 +113,12 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
 
     # Insert Item Quantity Along With Item_SKU and Cart_ID
-    sql_to_execute = f"""INSERT INTO cart_items (cart_id, item_sku, quantity) 
+    new_cart_items_row = f"""INSERT INTO cart_items (cart_id, item_sku, quantity) 
                          VALUES ({cart_id}, '{item_sku}', {cart_item.quantity})"""
 
         # Execute the SQL statement with parameter binding
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        result = connection.execute(sqlalchemy.text(new_cart_items_row))
 
     return "OK"
 
@@ -131,32 +131,32 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
 
     # Grab all items from cart_id from cart_items table
-    sql_to_execute = f"SELECT * FROM cart_items WHERE cart_id = {cart_id}"
+    select_cart_items = f"SELECT * FROM cart_items WHERE cart_id = {cart_id}"
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        result = connection.execute(sqlalchemy.text(select_cart_items))
         all_rows = result.fetchall()
     
     for row in all_rows:
         #Grab Current Quantity of item_sku from potions_table
-        sql_to_execute = f"SELECT * FROM potions_table WHERE item_sku = '{row.item_sku}'"
+        select_item_sku = f"SELECT * FROM potions_table WHERE item_sku = '{row.item_sku}'"
         with db.engine.begin() as connection:
-            result = connection.execute(sqlalchemy.text(sql_to_execute))
+            result = connection.execute(sqlalchemy.text(select_item_sku))
             current_quantity = result.fetchone().quantity
         
-        sql_to_execute = f"""UPDATE potions_table SET quantity = {current_quantity - row.quantity}
+        update_sku_quantity = f"""UPDATE potions_table SET quantity = {current_quantity - row.quantity}
                              WHERE item_sku = '{row.item_sku}'"""
         with db.engine.begin() as connection:
-            result = connection.execute(sqlalchemy.text(sql_to_execute))
+            result = connection.execute(sqlalchemy.text(update_sku_quantity))
 
     # Grab current gold value
-    sql_to_execute = f"SELECT * FROM global_inventory"
+    global_inventory_select = f"SELECT * FROM global_inventory"
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        result = connection.execute(sqlalchemy.text(global_inventory_select))
         current_gold = result.fetchone().gold
     
     # Update Gold
-    sql_to_execute = f"UPDATE global_inventory SET gold = {current_gold + int(cart_checkout.payment)}"
+    update_gold = f"UPDATE global_inventory SET gold = {current_gold + int(cart_checkout.payment)}"
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        result = connection.execute(sqlalchemy.text(update_gold))
 
     return "OK"

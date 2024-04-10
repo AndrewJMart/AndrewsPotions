@@ -20,9 +20,9 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     """ """
     print(f"potions delievered: {potions_delivered} order_id: {order_id}")
 
-    sql_to_execute = "SELECT * FROM global_inventory"
+    inital_query = "SELECT * FROM global_inventory"
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        result = connection.execute(sqlalchemy.text(inital_query))
         first_row = result.fetchone()
     
     current_red_ml = first_row.num_red_ml
@@ -39,28 +39,28 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         current_blue_ml -= potion.potion_type[2]
 
         # Check if a row with potion_type exists in potions_table
-        sql_query = f"SELECT * FROM potions_table WHERE item_sku = '{potion_name}'"
+        select_sku = f"SELECT * FROM potions_table WHERE item_sku = '{potion_name}'"
         with db.engine.begin() as connection:
-            result = connection.execute(sqlalchemy.text(sql_query))
+            result = connection.execute(sqlalchemy.text(select_sku))
             existing_row = result.fetchone()
 
         if existing_row:
             # Update the quantity column
             new_quantity = existing_row.quantity + potion.quantity
-            sql_update = f"""UPDATE potions_table SET quantity = {new_quantity} 
+            update_quantity = f"""UPDATE potions_table SET quantity = {new_quantity} 
                                          WHERE item_sku = '{potion_name}'"""
             with db.engine.begin() as connection:
-                connection.execute(sqlalchemy.text(sql_update))
+                connection.execute(sqlalchemy.text(update_quantity))
         else:
             # Insert a new row into potions_table to represent the new potion
-            sql_insert = f"""INSERT INTO potions_table (item_sku, quantity, price, red, green, blue) 
+            insert_new_potion = f"""INSERT INTO potions_table (item_sku, quantity, price, red, green, blue) 
                             VALUES ('{potion_name}', {potion.quantity}, 30, 
                             {potion.potion_type[0]}, {potion.potion_type[1]}, {potion.potion_type[2]})"""
             with db.engine.begin() as connection:
-                connection.execute(sqlalchemy.text(sql_insert))
+                connection.execute(sqlalchemy.text(insert_new_potion))
 
     # Update RGB ML in global_inventory
-    sql_to_execute = f"""
+    update_ml = f"""
         UPDATE global_inventory 
         SET 
             num_green_ml = {current_green_ml},
@@ -68,7 +68,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
             num_blue_ml = {current_blue_ml}
     """
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        result = connection.execute(sqlalchemy.text(update_ml))
 
 
     return "OK"
@@ -84,9 +84,9 @@ def get_bottle_plan():
     # Expressed in integers from 1 to 100 that must sum up to 100.
 
     # Initial Query Of Global_Inventory 
-    sql_to_execute = "SELECT * FROM global_inventory"
+    initial_query = "SELECT * FROM global_inventory"
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        result = connection.execute(sqlalchemy.text(initial_query))
         first_row = result.fetchone()
     
     current_red_ml = first_row.num_red_ml

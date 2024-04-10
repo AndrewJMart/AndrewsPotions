@@ -12,9 +12,9 @@ def get_catalog():
     """
 
     # Grab all available potions for catalog
-    sql_to_execute = f"SELECT * FROM potions_table WHERE quantity > 0"
+    select_stocked_potions = f"SELECT * FROM potions_table WHERE quantity > 0"
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        result = connection.execute(sqlalchemy.text(select_stocked_potions))
         all_rows = result.fetchall()
     
     # Initialize Empty Catalog Listing

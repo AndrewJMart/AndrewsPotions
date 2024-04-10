@@ -23,14 +23,12 @@ class Barrel(BaseModel):
 def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     """ """
     print(f"barrels delievered: {barrels_delivered} order_id: {order_id}")
-
     # Grab Initial Table
-    sql_to_execute = "SELECT * FROM global_inventory"
+    initial_query = "SELECT * FROM global_inventory"
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        result = connection.execute(sqlalchemy.text(initial_query))
         first_row = result.fetchone()
 
-    
     # Grab current ML / Gold value
     num_of_red_ml = first_row.num_red_ml
     num_of_green_ml = first_row.num_green_ml
@@ -41,7 +39,6 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     for barrel in barrels_delivered:
         # Update Gold Amount
         current_gold -= barrel.price * barrel.quantity
-
         # Red Barrel
         if barrel.potion_type[0] == 1:
             num_of_red_ml += barrel.ml_per_barrel * barrel.quantity
@@ -52,10 +49,8 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
         elif barrel.potion_type[2] == 1:
             num_of_blue_ml += barrel.ml_per_barrel * barrel.quantity
 
-
     # Now update the global_inventory to reflect new values
-
-    sql_to_execute = f"""
+    update_global_inventory = f"""
         UPDATE global_inventory 
         SET 
             num_green_ml = {num_of_green_ml},
@@ -64,8 +59,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
             gold = {current_gold}
     """
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
-
+        result = connection.execute(sqlalchemy.text(update_global_inventory))
 
     return "OK"
 
@@ -74,11 +68,10 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
     print(wholesale_catalog)
-
     # Grab current gold and gold benchmark
-    sql_to_execute = "SELECT * FROM global_inventory"
+    initial_query = "SELECT * FROM global_inventory"
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        result = connection.execute(sqlalchemy.text(initial_query))
         first_row = result.fetchone()
 
     current_gold = first_row.gold
@@ -87,13 +80,13 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     # num_of_green_ml = first_row.num_green_ml
     # num_of_blue_ml = first_row.num_blue_ml
 
-    sql_to_execute = """
+    select_red = """
     SELECT * 
     FROM potions_table 
     WHERE red = 100
     """
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        result = connection.execute(sqlalchemy.text(select_red))
         red_potion_row = result.fetchone()
 
     if red_potion_row:
@@ -101,13 +94,13 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     else:
         red_potion_quantity = 0
     
-    sql_to_execute = """
+    select_green = """
     SELECT * 
     FROM potions_table 
     WHERE green = 100
     """
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        result = connection.execute(sqlalchemy.text(select_green))
         green_potion_row = result.fetchone()
 
     if green_potion_row:
@@ -115,15 +108,14 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     else:
         green_potion_quantity = 0
 
-    sql_to_execute = """
+    select_blue = """
     SELECT * 
     FROM potions_table 
     WHERE blue = 100
     """
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        result = connection.execute(sqlalchemy.text(select_blue))
         blue_potion_row = result.fetchone()
-
 
     if blue_potion_row:
         blue_potion_quantity = blue_potion_row.quantity
@@ -140,7 +132,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         for barrel in wholesale_catalog:    
             # Check if barrel is green
             if barrel.potion_type[1] == 1 and current_gold >= barrel.price:
-                
                 # Acquire max amount of said barrel
                 max_purchasable_amount = 1
                 
@@ -160,11 +151,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     else:
         #If above gold threshold then begin buying red barrels (if number of red potions is less than ten)
         if red_potion_quantity <= 10:
-            #Purchase Max Amount of 
             for barrel in wholesale_catalog:
-                # Check if barrel is green
+                # Check if barrel is red
                 if barrel.potion_type[0] == 1 and current_gold >= barrel.price:
-                    
                     # Acquire max amount of said barrel
                     max_purchasable_amount = 1
                     
@@ -184,9 +173,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         else:
             #Purchase Max Amount of blue barrels
             for barrel in wholesale_catalog:
-                # Check if barrel is green
+                # Check if barrel is blue
                 if barrel.potion_type[2] == 1 and current_gold >= barrel.price:
-                    
                     # Acquire max amount of said barrel
                     max_purchasable_amount = 1
                     
