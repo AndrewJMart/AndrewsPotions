@@ -39,25 +39,25 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         current_blue_ml -= potion.potion_type[2]
 
         # Check if a row with potion_type exists in potions_table
-        sql_query = sqlalchemy.text(f"SELECT * FROM potions_table WHERE item_sku = '{potion_name}'")
+        sql_query = f"SELECT * FROM potions_table WHERE item_sku = '{potion_name}'"
         with db.engine.begin() as connection:
-            result = connection.execute(sql_query)
+            result = connection.execute(sqlalchemy.text(sql_query))
             existing_row = result.fetchone()
 
         if existing_row:
             # Update the quantity column
             new_quantity = existing_row.quantity + potion.quantity
-            sql_update = sqlalchemy.text(f"""UPDATE potions_table SET quantity = {new_quantity} 
-                                         WHERE item_sku = '{potion_name}'""")
+            sql_update = f"""UPDATE potions_table SET quantity = {new_quantity} 
+                                         WHERE item_sku = '{potion_name}'"""
             with db.engine.begin() as connection:
-                connection.execute(sql_update)
+                connection.execute(sqlalchemy.text(sql_update))
         else:
             # Insert a new row into potions_table to represent the new potion
-            sql_insert = sqlalchemy.text(f"""INSERT INTO potions_table (item_sku, quantity, price, red, green, blue) 
-                                         VALUES ('{potion_name}', {potion.quantity}, 30, 
-                                         {potion.potion_type[0]}, {potion.potion_type[1]}, {potion.potion_type[2]})""")
+            sql_insert = f"""INSERT INTO potions_table (item_sku, quantity, price, red, green, blue) 
+                            VALUES ('{potion_name}', {potion.quantity}, 30, 
+                            {potion.potion_type[0]}, {potion.potion_type[1]}, {potion.potion_type[2]})"""
             with db.engine.begin() as connection:
-                connection.execute(sql_insert)
+                connection.execute(sqlalchemy.text(sql_insert))
 
     # Update RGB ML in global_inventory
     sql_to_execute = f"""
