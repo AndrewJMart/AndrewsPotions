@@ -29,3 +29,5 @@ def get_catalog():
                     "price": row.price,
                     "potion_type": [row.red, row.green, row.blue, 0],
                 })
+    
+    return catalog_listing
