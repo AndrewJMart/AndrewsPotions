@@ -76,6 +76,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
     current_gold = first_row.gold
     gold_benchmark = first_row.gold_benchmark
+
+    # Potion Benchmarks
+    red_benchmark = first_row.red_potion_benchmark
+    green_benchmark = first_row.green_potion_benchmark
+    # blue_benchmark = first_row.blue_potion_benchmark
     # num_of_red_ml = first_row.num_red_ml
     # num_of_green_ml = first_row.num_green_ml
     # num_of_blue_ml = first_row.num_blue_ml
@@ -126,7 +131,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     barrel_purchase_list = []
 
     # Benchmark Eval - If Shop is below gold_benchmark (400) or less than green_potion_benchmark only purchase green barrels
-    if current_gold < gold_benchmark or green_potion_quantity < 5:
+    if current_gold < gold_benchmark:
         
         #Implement simple selling only green potions
         for barrel in wholesale_catalog:    
@@ -149,8 +154,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
                 })
     else:
-        #If above gold threshold then begin buying red barrels (if number of red potions is less than ten)
-        if red_potion_quantity <= 10:
+        # If above gold threshold then begin buying red barrels (if number of red potions is less than ten)
+        if red_potion_quantity <= red_benchmark:
             for barrel in wholesale_catalog:
                 # Check if barrel is red
                 if barrel.potion_type[0] == 1 and current_gold >= barrel.price:
@@ -171,7 +176,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
                     })
         else:
-            #Purchase Max Amount of blue barrels
+            # Purchase Max Amount of blue barrels
             for barrel in wholesale_catalog:
                 # Check if barrel is blue
                 if barrel.potion_type[2] == 1 and current_gold >= barrel.price:
