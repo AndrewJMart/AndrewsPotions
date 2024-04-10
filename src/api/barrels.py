@@ -94,7 +94,12 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql_to_execute))
-        red_potion_quantity = result.fetchone().quantity
+        red_potion_row = result.fetchone()
+
+    if red_potion_row:
+        red_potion_quantity = red_potion_row.quantity
+    else:
+        red_potion_quantity = 0
     
     sql_to_execute = """
     SELECT * 
@@ -103,7 +108,12 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql_to_execute))
-        green_potion_quantity = result.fetchone().quantity
+        green_potion_row = result.fetchone()
+
+    if green_potion_row:
+        green_potion_quantity = green_potion_row.quantity
+    else:
+        green_potion_quantity = 0
 
     sql_to_execute = """
     SELECT * 
@@ -112,8 +122,13 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql_to_execute))
-        blue_potion_quantity = result.fetchone().quantity
+        blue_potion_row = result.fetchone()
 
+
+    if blue_potion_row:
+        blue_potion_quantity = blue_potion_row.quantity
+    else:
+        blue_potion_quantity = 0
     
     # Initialize empty barrel list
     barrel_purchase_list = []
