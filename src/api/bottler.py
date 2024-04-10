@@ -54,7 +54,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         else:
             # Insert a new row into potions_table to represent the new potion
             insert_new_potion = f"""INSERT INTO potions_table (item_sku, quantity, price, red, green, blue) 
-                            VALUES ('{potion_name}', {potion.quantity}, 30, 
+                            VALUES ('{potion_name}', {potion.quantity}, 45, 
                             {potion.potion_type[0]}, {potion.potion_type[1]}, {potion.potion_type[2]})"""
             with db.engine.begin() as connection:
                 connection.execute(sqlalchemy.text(insert_new_potion))
