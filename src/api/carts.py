@@ -88,9 +88,7 @@ def post_visits(visit_id: int, customers: list[Customer]):
 def create_cart(new_cart: Customer):
     """ """
 
-    sql_to_execute = f"INSERT INTO carts (character_name, character_class, level) 
-        VALUES ({new_cart.customer_name}, {new_cart.character_class}, {new_cart.level})
-        returing cart_id"
+    sql_to_execute = f"INSERT INTO carts (character_name, character_class, level) VALUES ({new_cart.customer_name}, {new_cart.character_class}, {new_cart.level}) returing cart_id"
 
         # Execute the SQL statement with parameter binding
     with db.engine.begin() as connection:
@@ -108,8 +106,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
 
     # Insert Item Quantity Along With Item_SKU and Cart_ID
-    sql_to_execute = f"INSERT INTO cart_items (cart_id, item_sku, quantity) 
-                       VALUES ({cart_id}, {item_sku}, {cart_item.quantity})"
+    sql_to_execute = f"INSERT INTO cart_items (cart_id, item_sku, quantity) VALUES ({cart_id}, {item_sku}, {cart_item.quantity})"
 
         # Execute the SQL statement with parameter binding
     with db.engine.begin() as connection:
@@ -138,8 +135,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             result = connection.execute(sqlalchemy.text(sql_to_execute))
             current_quantity = result.fetchone().quantity
         
-        sql_to_execute = sqlalchemy.text(f"UPDATE potions_table SET quantity = {current_quantity - row.quantity} 
-                                         WHERE item_sku = '{row.item_sku}'")
+        sql_to_execute = sqlalchemy.text(f"UPDATE potions_table SET quantity = {current_quantity - row.quantity} WHERE item_sku = '{row.item_sku}'")
         with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text(sql_to_execute))
             current_quantity = result.fetchone().quantity
