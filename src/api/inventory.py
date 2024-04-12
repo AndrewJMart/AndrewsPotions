@@ -29,7 +29,12 @@ def get_inventory():
     potion_sum_query = "SELECT SUM(quantity) AS total_potions FROM potions_table"
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(potion_sum_query))
-        total_potions = result.fetchone().total_potions
+        first_row = result.fetchone()
+    
+    if first_row:
+        total_potions = first_row.total_potions
+    else:
+        total_potions = 0
 
     return {"number_of_potions": total_potions, "ml_in_barrels": current_ml, "gold": current_gold}
 

@@ -117,11 +117,15 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
 
     #TESTED AND WORKS V2.05
 
-    # Insert Item Quantity Along With Item_SKU and Cart_ID
-    new_cart_items_row = f"""INSERT INTO cart_items (cart_id, item_sku, quantity) 
-                         VALUES ({cart_id}, '{item_sku}', {cart_item.quantity})"""
+    # Grab cost per potion
+    potion_cost_query = f"""SELECT * FROM potions_table WHERE item_sku = '{item_sku}'"""
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text(potion_cost_query))
+        potion_cost = result.fetchone().price
 
-        # Execute the SQL statement with parameter binding
+    # Insert Item Quantity Along With Item_SKU and Cart_ID
+    new_cart_items_row = f"""INSERT INTO cart_items (cart_id, item_sku, quantity, cost_per_potion) 
+                         VALUES ({cart_id}, '{item_sku}', {cart_item.quantity}, {potion_cost})"""
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(new_cart_items_row))
 
@@ -159,8 +163,16 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         result = connection.execute(sqlalchemy.text(global_inventory_select))
         current_gold = result.fetchone().gold
     
-    # Update Gold
-    update_gold = f"UPDATE global_inventory SET gold = {current_gold + int(cart_checkout.payment)}"
+    # Grab all rows of the cart_items
+    cart_item_list = f"SELECT * FROM cart_items WHERE cart_id = {cart_id}"
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text(cart_item_list))
+        all_rows = result.fetchall()
+
+    for row in all_rows:
+        current_gold += row.quantity * row.cost_per_potion
+
+    update_gold = f"UPDATE global_inventory SET gold = {current_gold}"
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(update_gold))
 
