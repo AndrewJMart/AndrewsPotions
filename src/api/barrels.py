@@ -66,14 +66,25 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
 
     return "OK"
 
+def ml_per_gold(barrel):
+    return barrel.ml_per_barrel / barrel.price
+
+def find_max_purchasable_amount(barrel, current_gold):
+    max_purchasable_amount = 1  # At least one barrel can be purchased
+    for i in range(2, barrel.quantity + 1):
+        quantity_price = barrel.price * i
+        if current_gold >= quantity_price:
+            max_purchasable_amount = i
+        else:
+            break
+    return max_purchasable_amount
+
+
 # Gets called once a day
 @router.post("/plan")
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
-    print(wholesale_catalog)
-
     # TESTED AND WORKS FOR NOW V2.05
-
 
     # Grab current gold and gold benchmark
     initial_query = "SELECT * FROM global_inventory"
@@ -137,71 +148,54 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     # Initialize empty barrel list
     barrel_purchase_list = []
 
+    # Sort catalog on ML_Per_Barrel
+    sorted_wholesale_catalog = sorted(wholesale_catalog, key=ml_per_gold, reverse= True)
+    print(sorted_wholesale_catalog)
+
     # Benchmark Eval - If Shop is below gold_benchmark (400) or less than green_potion_benchmark only purchase green barrels
     if current_gold < gold_benchmark:
-        
         #Implement simple selling only green potions
-        for barrel in wholesale_catalog:    
+        for barrel in sorted_wholesale_catalog:    
             # Check if barrel is green
             if barrel.potion_type[1] == 1 and current_gold >= barrel.price and "MINI" not in barrel.sku:
                 # Acquire max amount of said barrel
-                max_purchasable_amount = 1
-                
-                for i in range(2, barrel.quantity + 1):
-                    quantity_price = barrel.price * i
-                    if current_gold > quantity_price:
-                        max_purchasable_amount = i
-                    else:
-                        break
-                # Add max quantity amount of barrel to purchase list
+                max_purchase = find_max_purchasable_amount(barrel, current_gold)
+
+                # Update Gold
+                current_gold -= barrel.price * max_purchase
+                # Add max quantity amount of barrel to purchase list IN appropriate spot
                 barrel_purchase_list.append({
-
                     "sku": barrel.sku,
-                    "quantity": max_purchasable_amount,
-
+                    "quantity": max_purchase,
                 })
     else:
         # If above gold threshold then begin buying red barrels (if number of red potions is less than ten)
         if red_potion_quantity <= red_benchmark:
-            for barrel in wholesale_catalog:
+            for barrel in sorted_wholesale_catalog:
                 # Check if barrel is red
                 if barrel.potion_type[0] == 1 and current_gold >= barrel.price and "MINI" not in barrel.sku:
-                    # Acquire max amount of said barrel
-                    max_purchasable_amount = 1
-                    
-                    for i in range(2, barrel.quantity + 1):
-                        quantity_price = barrel.price * i
-                        if current_gold > quantity_price:
-                            max_purchasable_amount = i
-                        else:
-                            break
+                    # Acquire max amount of said barrel & Update Gold
+                    max_purchase = find_max_purchasable_amount(barrel, current_gold)
+                    current_gold -= barrel.price * max_purchase
+
                     # Add max quantity amount of barrel to purchase list
                     barrel_purchase_list.append({
-
                         "sku": barrel.sku,
-                        "quantity": max_purchasable_amount,
-
+                        "quantity": max_purchase,
                     })
         else:
             # Purchase Max Amount of blue barrels
-            for barrel in wholesale_catalog:
+            for barrel in sorted_wholesale_catalog:
                 # Check if barrel is blue
                 if barrel.potion_type[2] == 1 and current_gold >= barrel.price and "MINI" not in barrel.sku:
-                    # Acquire max amount of said barrel
-                    max_purchasable_amount = 1
-                    
-                    for i in range(2, barrel.quantity + 1):
-                        quantity_price = barrel.price * i
-                        if current_gold > quantity_price:
-                            max_purchasable_amount = i
-                        else:
-                            break
+                    # Acquire max amount of said barrel & Update Gold
+                    max_purchase = find_max_purchasable_amount(barrel, current_gold)
+                    current_gold -= barrel.price * max_purchase
+
                     # Add max quantity amount of barrel to purchase list
                     barrel_purchase_list.append({
-
                         "sku": barrel.sku,
-                        "quantity": max_purchasable_amount,
-
+                        "quantity": max_purchase,
                     })
             
     return barrel_purchase_list
