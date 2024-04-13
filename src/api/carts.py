@@ -152,6 +152,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             result = connection.execute(sqlalchemy.text(select_item_sku))
             current_quantity = result.fetchone().quantity
         
+        # Update Potion Count in Potions_Table
         update_sku_quantity = f"""UPDATE potions_table SET quantity = {current_quantity - row.quantity}
                              WHERE item_sku = '{row.item_sku}'"""
         with db.engine.begin() as connection:
@@ -163,16 +164,18 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         result = connection.execute(sqlalchemy.text(global_inventory_select))
         current_gold = result.fetchone().gold
     
-    # Grab all rows of the cart_items
+    # Grab all rows of the cart_items of this cart_id
     cart_item_list = f"SELECT * FROM cart_items WHERE cart_id = {cart_id}"
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(cart_item_list))
         all_rows = result.fetchall()
 
-    for row in all_rows:
-        current_gold += row.quantity * row.cost_per_potion
+    added_gold = 0
 
-    update_gold = f"UPDATE global_inventory SET gold = {current_gold}"
+    for row in all_rows:
+        added_gold += row.quantity * row.cost_per_potion
+
+    update_gold = f"UPDATE global_inventory SET gold = {current_gold + added_gold}"
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(update_gold))
 
