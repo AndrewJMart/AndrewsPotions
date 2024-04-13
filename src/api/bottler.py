@@ -99,8 +99,16 @@ def get_bottle_plan():
 
     #Initialize Empty Bottle list
     Bottle_Plan_List = []
-
     total_potions = 0
+
+    # Grab Total Number of existing potions
+    select_stocked_potions = f"SELECT * FROM potions_table WHERE quantity > 0"
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text(select_stocked_potions))
+        all_rows = result.fetchall()
+    
+    for row in all_rows:
+        total_potions += row.quantity
     
     if current_red_ml >= 100:
         # Calculate How Many Potions To Make
