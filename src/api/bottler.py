@@ -99,32 +99,54 @@ def get_bottle_plan():
 
     #Initialize Empty Bottle list
     Bottle_Plan_List = []
+
+    total_potions = 0
     
     if current_red_ml >= 100:
         # Calculate How Many Potions To Make
         potions_to_make = current_red_ml // 100
+
+        if potions_to_make + total_potions > 50:
+            potions_to_make = 50 - total_potions
+
         Bottle_Plan_List.append(
                 {
                     "potion_type": [100, 0, 0, 0],
                     "quantity": potions_to_make,
                 }
         )
+
+        total_potions += potions_to_make
+        
     if current_green_ml >= 100:
         potions_to_make = current_green_ml // 100
+
+        if potions_to_make + total_potions > 50:
+            potions_to_make = 50 - total_potions
+            
         Bottle_Plan_List.append(
                 {
                     "potion_type": [0, 100, 0, 0],
                     "quantity": potions_to_make,
                 }
         )
+
+        total_potions += potions_to_make
+
     if current_blue_ml >= 100:
         potions_to_make = current_blue_ml // 100
+
+        if potions_to_make + total_potions > 50:
+            potions_to_make = 50 - total_potions
+        
         Bottle_Plan_List.append(
                 {
                     "potion_type": [0, 0, 100, 0],
                     "quantity": potions_to_make,
                 }
         )
+
+        total_potions += potions_to_make
     
     # Return final list
     return Bottle_Plan_List
