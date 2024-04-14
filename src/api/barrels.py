@@ -69,11 +69,12 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
 def ml_per_gold(barrel):
     return barrel.ml_per_barrel / barrel.price
 
-def find_max_purchasable_amount(barrel, current_gold):
+def find_max_purchasable_amount(barrel, current_gold, total_ml):
     max_purchasable_amount = 1  # At least one barrel can be purchased
     for i in range(2, barrel.quantity + 1):
         quantity_price = barrel.price * i
-        if current_gold >= quantity_price:
+        total_ml = total_ml * i
+        if current_gold >= quantity_price and total_ml <= 10000:
             max_purchasable_amount = i
         else:
             break
@@ -99,9 +100,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     red_benchmark = first_row.red_potion_benchmark
     green_benchmark = first_row.green_potion_benchmark
     # blue_benchmark = first_row.blue_potion_benchmark
-    # num_of_red_ml = first_row.num_red_ml
-    # num_of_green_ml = first_row.num_green_ml
-    # num_of_blue_ml = first_row.num_blue_ml
+    num_of_red_ml = first_row.num_red_ml
+    num_of_green_ml = first_row.num_green_ml
+    num_of_blue_ml = first_row.num_blue_ml
+
+    total_ml = num_of_red_ml + num_of_blue_ml + num_of_green_ml
 
     select_red = """
     SELECT * 
@@ -157,12 +160,12 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         #Implement simple selling only green potions
         for barrel in sorted_wholesale_catalog:    
             # Check if barrel is green
-            if barrel.potion_type[1] == 1 and current_gold >= barrel.price and "MINI" not in barrel.sku:
+            if barrel.potion_type[1] == 1 and current_gold >= barrel.price and "MINI" not in barrel.sku and total_ml + barrel.ml_per_barrel <= 10000:
                 # Acquire max amount of said barrel
                 max_purchase = find_max_purchasable_amount(barrel, current_gold)
-
-                # Update Gold
                 current_gold -= barrel.price * max_purchase
+                total_ml += barrel.ml_per_barrel * max_purchase
+                
                 # Add max quantity amount of barrel to purchase list IN appropriate spot
                 barrel_purchase_list.append({
                     "sku": barrel.sku,
@@ -173,10 +176,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         if red_potion_quantity <= red_benchmark:
             for barrel in sorted_wholesale_catalog:
                 # Check if barrel is red
-                if barrel.potion_type[0] == 1 and current_gold >= barrel.price and "MINI" not in barrel.sku:
+                if barrel.potion_type[0] == 1 and current_gold >= barrel.price and "MINI" not in barrel.sku and total_ml + barrel.ml_per_barrel <= 10000:
                     # Acquire max amount of said barrel & Update Gold
-                    max_purchase = find_max_purchasable_amount(barrel, current_gold)
+                    max_purchase = find_max_purchasable_amount(barrel, current_gold, total_ml)
                     current_gold -= barrel.price * max_purchase
+                    total_ml += barrel.ml_per_barrel * max_purchase
 
                     # Add max quantity amount of barrel to purchase list
                     barrel_purchase_list.append({
@@ -187,10 +191,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             # Purchase Max Amount of blue barrels
             for barrel in sorted_wholesale_catalog:
                 # Check if barrel is blue
-                if barrel.potion_type[2] == 1 and current_gold >= barrel.price and "MINI" not in barrel.sku:
+                if barrel.potion_type[2] == 1 and current_gold >= barrel.price and "MINI" not in barrel.sku and total_ml + barrel.ml_per_barrel <= 10000:
                     # Acquire max amount of said barrel & Update Gold
-                    max_purchase = find_max_purchasable_amount(barrel, current_gold)
+                    max_purchase = find_max_purchasable_amount(barrel, current_gold, total_ml)
                     current_gold -= barrel.price * max_purchase
+                    total_ml += barrel.ml_per_barrel * max_purchase
 
                     # Add max quantity amount of barrel to purchase list
                     barrel_purchase_list.append({
