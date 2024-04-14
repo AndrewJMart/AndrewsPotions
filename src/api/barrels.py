@@ -4,6 +4,7 @@ from src.api import auth
 import sqlalchemy
 from src import database as db
 
+
 router = APIRouter(
     prefix="/barrels",
     tags=["barrels"],
@@ -24,24 +25,17 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     """ """
     print(f"barrels delievered: {barrels_delivered} order_id: {order_id}")
 
-    #TESTED AND WORKS V2.05
+    #TESTED AND WORKS V2.1
 
-    # Grab Initial Table
-    initial_query = "SELECT * FROM global_inventory"
-    with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(initial_query))
-        first_row = result.fetchone()
-
-    # Grab current ML / Gold value
-    num_of_red_ml = first_row.num_red_ml
-    num_of_green_ml = first_row.num_green_ml
-    num_of_blue_ml = first_row.num_blue_ml
-    current_gold = first_row.gold
+    gold = 0
+    num_of_red_ml = 0
+    num_of_green_ml = 0
+    num_of_blue_ml = 0 
 
     # Looping through receieved barrels and adjusting values to eventually update SupaBase data
     for barrel in barrels_delivered:
         # Update Gold Amount
-        current_gold -= barrel.price * barrel.quantity
+        gold -= barrel.price * barrel.quantity
         # Red Barrel
         if barrel.potion_type[0] == 1:
             num_of_red_ml += barrel.ml_per_barrel * barrel.quantity
@@ -53,16 +47,10 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
             num_of_blue_ml += barrel.ml_per_barrel * barrel.quantity
 
     # Now update the global_inventory to reflect new values
-    update_global_inventory = f"""
-        UPDATE global_inventory 
-        SET 
-            num_green_ml = {num_of_green_ml},
-            num_red_ml = {num_of_red_ml},
-            num_blue_ml = {num_of_blue_ml},
-            gold = {current_gold}
-    """
+    insert_barrel_transaction = f"""INSERT INTO transactions (gold, red_ml, green_ml, blue_ml) 
+    VALUES ({gold}, {num_of_red_ml}, {num_of_green_ml}, {num_of_blue_ml})"""
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(update_global_inventory))
+        result = connection.execute(sqlalchemy.text(insert_barrel_transaction))
 
     return "OK"
 
@@ -80,43 +68,82 @@ def find_max_purchasable_amount(barrel, current_gold, total_ml):
             break  # Exit the loop if constraints are violated
     return max_purchasable_amount
 
+def get_current_gold():
+    with db.engine.begin() as connection:
+        # Grab initial gold / Mls
+        initial_query = """
+        SELECT 
+            SUM(gold) AS total_gold
+        FROM transactions
+        """
+        result = connection.execute(sqlalchemy.text(initial_query))
+        first_row = result.fetchone()
+
+        # Extracting the sums of each potion type
+        if first_row:
+            current_gold = first_row.total_gold
+        else:
+            current_gold = 0
+    return current_gold
+
+def get_current_ml_totals():
+    with db.engine.begin() as connection:
+        # Grab initial gold / Mls
+        initial_query = """
+        SELECT 
+            SUM(red_ml) AS total_red_ml,
+            SUM(green_ml) AS total_green_ml,
+            SUM(blue_ml) AS total_blue_ml
+        FROM transactions
+        """
+        result = connection.execute(sqlalchemy.text(initial_query))
+        first_row = result.fetchone()
+
+        # Extracting the sums of each potion type
+        if first_row:
+            current_red_ml = first_row.total_red_ml
+            current_green_ml = first_row.total_green_ml
+            current_blue_ml = first_row.total_blue_ml
+        else:
+            current_red_ml = 0
+            current_green_ml = 0
+            current_blue_ml = 0
+
+    return current_red_ml, current_green_ml, current_blue_ml
 
 # Gets called once a day
 @router.post("/plan")
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
-    # TESTED AND WORKS FOR NOW V2.05
+    # TESTED AND WORKS FOR V2.1
 
     # Grab current gold and gold benchmark
-    initial_query = "SELECT * FROM global_inventory"
     with db.engine.begin() as connection:
+        initial_query = "SELECT * FROM global_inventory"
         result = connection.execute(sqlalchemy.text(initial_query))
         first_row = result.fetchone()
 
-    current_gold = first_row.gold
-    gold_benchmark = first_row.gold_benchmark
+        gold_benchmark = first_row.gold_benchmark
+        red_benchmark = first_row.red_potion_benchmark
 
-    # Potion Benchmarks
-    red_benchmark = first_row.red_potion_benchmark
-    num_of_red_ml = first_row.num_red_ml
-    num_of_green_ml = first_row.num_green_ml
-    num_of_blue_ml = first_row.num_blue_ml
+        red_ml, blue_ml, green_ml = get_current_ml_totals()
+        total_ml = red_ml + blue_ml + green_ml
 
-    total_ml = num_of_red_ml + num_of_blue_ml + num_of_green_ml
+        # Query Current Gold
+        current_gold = get_current_gold()
 
-    select_red = """
-    SELECT * 
-    FROM potions_table 
-    WHERE red = 100
-    """
-    with db.engine.begin() as connection:
+        select_red = """
+        SELECT * 
+        FROM potions_table 
+        WHERE red = 100
+        """
         result = connection.execute(sqlalchemy.text(select_red))
         red_potion_row = result.fetchone()
 
-    if red_potion_row:
-        red_potion_quantity = red_potion_row.quantity
-    else:
-        red_potion_quantity = 0
+        if red_potion_row:
+            red_potion_quantity = red_potion_row.quantity
+        else:
+            red_potion_quantity = 0
     
     # Initialize empty barrel list
     barrel_purchase_list = []

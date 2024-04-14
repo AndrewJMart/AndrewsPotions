@@ -88,7 +88,7 @@ def post_visits(visit_id: int, customers: list[Customer]):
 def create_cart(new_cart: Customer):
     """ """
 
-    #TESTED AND WORKS V2.05
+    #TESTED AND WORKS V2.1
 
     insert_cart_row = f"""INSERT INTO carts (customer_name, character_class, level) 
     VALUES ('{new_cart.customer_name}', '{new_cart.character_class}', {new_cart.level})"""
@@ -115,7 +115,7 @@ class CartItem(BaseModel):
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
 
-    #TESTED AND WORKS V2.05
+    #TESTED AND WORKS V2.1
 
     # Grab cost per potion
     potion_cost_query = f"""SELECT * FROM potions_table WHERE item_sku = '{item_sku}'"""
@@ -139,6 +139,8 @@ class CartCheckout(BaseModel):
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
 
+    #Tested and works V2.1
+
     # Grab all items from cart_id from cart_items table
     select_cart_items = f"SELECT * FROM cart_items WHERE cart_id = {cart_id}"
     with db.engine.begin() as connection:
@@ -157,12 +159,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                              WHERE item_sku = '{row.item_sku}'"""
         with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text(update_sku_quantity))
-
-    # Grab current gold value
-    global_inventory_select = f"SELECT * FROM global_inventory"
-    with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(global_inventory_select))
-        current_gold = result.fetchone().gold
     
     # Grab all rows of the cart_items of this cart_id
     cart_item_list = f"SELECT * FROM cart_items WHERE cart_id = {cart_id}"
@@ -171,12 +167,12 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         all_rows = result.fetchall()
 
     added_gold = 0
-
     for row in all_rows:
         added_gold += row.quantity * row.cost_per_potion
 
-    update_gold = f"UPDATE global_inventory SET gold = {current_gold + added_gold}"
+    insert_cart_transaction = f"""INSERT INTO transactions (gold, red_ml, green_ml, blue_ml) 
+    VALUES ({added_gold}, 0, 0, 0)"""
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(update_gold))
+        result = connection.execute(sqlalchemy.text(insert_cart_transaction))
 
     return "OK"
