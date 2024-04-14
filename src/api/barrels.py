@@ -73,11 +73,11 @@ def find_max_purchasable_amount(barrel, current_gold, total_ml):
     max_purchasable_amount = 1  # At least one barrel can be purchased
     for i in range(2, barrel.quantity + 1):
         quantity_price = barrel.price * i
-        total_ml = total_ml * i
-        if current_gold >= quantity_price and total_ml <= 10000:
+        quantity_ml = barrel.ml_per_barrel * i
+        if current_gold >= quantity_price and total_ml + quantity_ml <= 10000:
             max_purchasable_amount = i
         else:
-            break
+            break  # Exit the loop if constraints are violated
     return max_purchasable_amount
 
 
