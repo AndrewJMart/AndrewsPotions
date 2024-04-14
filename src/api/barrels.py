@@ -98,8 +98,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
     # Potion Benchmarks
     red_benchmark = first_row.red_potion_benchmark
-    green_benchmark = first_row.green_potion_benchmark
-    # blue_benchmark = first_row.blue_potion_benchmark
     num_of_red_ml = first_row.num_red_ml
     num_of_green_ml = first_row.num_green_ml
     num_of_blue_ml = first_row.num_blue_ml
@@ -120,34 +118,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     else:
         red_potion_quantity = 0
     
-    select_green = """
-    SELECT * 
-    FROM potions_table 
-    WHERE green = 100
-    """
-    with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(select_green))
-        green_potion_row = result.fetchone()
-
-    if green_potion_row:
-        green_potion_quantity = green_potion_row.quantity
-    else:
-        green_potion_quantity = 0
-
-    select_blue = """
-    SELECT * 
-    FROM potions_table 
-    WHERE blue = 100
-    """
-    with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(select_blue))
-        blue_potion_row = result.fetchone()
-
-    if blue_potion_row:
-        blue_potion_quantity = blue_potion_row.quantity
-    else:
-        blue_potion_quantity = 0
-    
     # Initialize empty barrel list
     barrel_purchase_list = []
 
@@ -162,7 +132,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             # Check if barrel is green
             if barrel.potion_type[1] == 1 and current_gold >= barrel.price and "MINI" not in barrel.sku and total_ml + barrel.ml_per_barrel <= 10000:
                 # Acquire max amount of said barrel
-                max_purchase = find_max_purchasable_amount(barrel, current_gold)
+                max_purchase = find_max_purchasable_amount(barrel, current_gold, total_ml)
                 current_gold -= barrel.price * max_purchase
                 total_ml += barrel.ml_per_barrel * max_purchase
                 
