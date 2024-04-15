@@ -131,19 +131,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
         # Query Current Gold
         current_gold = get_current_gold()
-
-        select_red = """
-        SELECT * 
-        FROM potions_table 
-        WHERE red = 100
-        """
-        result = connection.execute(sqlalchemy.text(select_red))
-        red_potion_row = result.fetchone()
-
-        if red_potion_row:
-            red_potion_quantity = red_potion_row.quantity
-        else:
-            red_potion_quantity = 0
     
     # Initialize empty barrel list
     barrel_purchase_list = []
@@ -170,7 +157,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 })
     else:
         # If above gold threshold then begin buying red barrels (if number of red potions is less than ten)
-        if red_potion_quantity <= red_benchmark:
+        if current_gold <= 1000:
             for barrel in sorted_wholesale_catalog:
                 # Check if barrel is red
                 if barrel.potion_type[0] == 1 and current_gold >= barrel.price and "MINI" not in barrel.sku and total_ml + barrel.ml_per_barrel <= 10000:

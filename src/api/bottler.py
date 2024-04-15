@@ -45,7 +45,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     """ """
     print(f"potions delievered: {potions_delivered} order_id: {order_id}")
 
-    # Tested and Works V2.1
+    # Tested and Works V2.2
     with db.engine.begin() as connection:
         current_red_ml = 0
         current_green_ml = 0
@@ -64,19 +64,17 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
             result = connection.execute(sqlalchemy.text(select_sku))
             existing_row = result.fetchone()
 
-            if existing_row:
-                # Update the quantity column
-                new_quantity = existing_row.quantity + potion.quantity
-                update_quantity = f"""UPDATE potions_table SET quantity = {new_quantity} 
-                                            WHERE item_sku = '{potion_name}'"""
-                connection.execute(sqlalchemy.text(update_quantity))
-
-            else:
+            if not existing_row:
                 # Insert a new row into potions_table to represent the new potion
-                insert_new_potion = f"""INSERT INTO potions_table (item_sku, quantity, price, red, green, blue) 
-                                VALUES ('{potion_name}', {potion.quantity}, 35, 
-                                {potion.potion_type[0]}, {potion.potion_type[1]}, {potion.potion_type[2]})"""
-                connection.execute(sqlalchemy.text(insert_new_potion))
+                insert_into_table = f"""INSERT INTO potions_table (item_sku, price, red, green, blue) 
+                                VALUES ('{potion_name}', 35, {potion.potion_type[0]}, 
+                                {potion.potion_type[1]}, {potion.potion_type[2]})"""
+                connection.execute(sqlalchemy.text(insert_into_table))
+
+            # Insert a new row into potions_table to represent the new potion
+            insert_into_ledger = f"""INSERT INTO potion_ledger (item_sku, quantity) 
+                            VALUES ('{potion_name}', {potion.quantity})"""
+            connection.execute(sqlalchemy.text(insert_into_ledger))
 
         # Update RGB ML in ledger
         insert_bottle_transaction = f"""INSERT INTO transactions (gold, red_ml, green_ml, blue_ml) 
@@ -91,7 +89,7 @@ def get_bottle_plan():
     Go from barrel to bottle.
     """
 
-    # TESTED AND WORKS V2.1
+    # TESTED AND WORKS V2.2
 
     # Query Current MLs
     red_ml, green_ml, blue_ml = get_current_ml_totals()
@@ -101,13 +99,11 @@ def get_bottle_plan():
     total_potions = 0
 
     # Grab Total Number of existing potions
-    select_stocked_potions = f"SELECT * FROM potions_table WHERE quantity > 0"
+    select_stocked_potions = f"SELECT SUM(quantity) as total_potions FROM potion_ledger"
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(select_stocked_potions))
-        all_rows = result.fetchall()
-    
-    for row in all_rows:
-        total_potions += row.quantity
+        all_rows = result.fetchone()
+        total_potions = all_rows.total_potions
     
     if red_ml >= 100 and total_potions < 50:
         # Calculate How Many Potions To Make
