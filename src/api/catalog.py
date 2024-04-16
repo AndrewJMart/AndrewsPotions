@@ -14,8 +14,7 @@ def get_catalog():
     #TESTED AND WORKS V2.2
 
     # Grab all available potions for catalog
-    select_stocked_potions = f"""SELECT item_sku, SUM(quantity) AS total_potions FROM potion_ledger 
-                                 WHERE quantity > 0 GROUP BY item_sku"""
+    select_stocked_potions = f"""SELECT item_sku, SUM(quantity) AS total_potions FROM potion_ledger GROUP BY item_sku"""
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(select_stocked_potions))
         all_rows = result.fetchall()
