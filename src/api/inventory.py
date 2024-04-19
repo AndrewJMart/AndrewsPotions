@@ -62,7 +62,7 @@ def get_current_ml_totals():
 def get_inventory():
     """ """
 
-    #TESTED AND WORKS WITH V3.00
+    #TESTED AND WORKS WITH V3.01
     current_gold = get_current_gold()
     red_ml, green_ml, blue_ml, dark_ml = get_current_ml_totals()
     total_ml = red_ml + green_ml + blue_ml + dark_ml
@@ -87,7 +87,7 @@ def get_capacity_plan():
     Start with 1 capacity for 50 potions and 1 capacity for 10000 ml of potion. Each additional 
     capacity unit costs 1000 gold.
     """
-    # Tested And Works V3.00
+    # Tested And Works V3.01
     # Grab Current Gold
     current_gold = get_current_gold()
 
@@ -113,29 +113,31 @@ def deliver_capacity_plan(capacity_purchase : CapacityPurchase, order_id: int):
     Start with 1 capacity for 50 potions and 1 capacity for 10000 ml of potion. Each additional 
     capacity unit costs 1000 gold.
     """
-    # Tested And Works V3.00
+    # Tested And Works V3.01
     with db.engine.begin() as connection:
         # Process Transaction
         insert_cart_transaction = f"""INSERT INTO transactions (gold, red_ml, green_ml, blue_ml, dark_ml) 
         VALUES (-2000, 0, 0, 0, 0)"""
         result = connection.execute(sqlalchemy.text(insert_cart_transaction))
 
-        # Get Current Max Potions / Max ML
-        query_global_inventory = f""" SELECT * FROM global_inventory
-        """
-        result = connection.execute(sqlalchemy.text(query_global_inventory))
-        row_one = result.fetchone()
-        current_max_ml = row_one.max_ml
-        current_max_potions = row_one.max_potions
-
         # Update Max Potions
-        update_max_potions = f"""UPDATE global_inventory SET max_potions = {current_max_potions + capacity_purchase.potion_capacity}
-        """
-        result = connection.execute(sqlalchemy.text(update_max_potions))
+        update_max_potions = """UPDATE global_inventory 
+                             SET max_potions = global_inventory.max_potions + :potion_capacity"""
+        
+        result = connection.execute(sqlalchemy.text(update_max_potions), 
+                                    {
+                                     'potion_capacity': capacity_purchase.potion_capacity   
+                                    }
+                                    )
 
-        #Update Max ML
-        update_max_ml = f"""UPDATE global_inventory SET max_ml = {current_max_ml + capacity_purchase.ml_capacity}
-        """
-        result = connection.execute(sqlalchemy.text(update_max_ml))
+        # Update Max ML
+        update_max_ml = """UPDATE global_inventory 
+                             SET max_ml = global_inventory.max_ml + :ml_capacity"""
+        
+        result = connection.execute(sqlalchemy.text(update_max_ml), 
+                                    {
+                                     'ml_capacity': capacity_purchase.ml_capacity   
+                                    }
+                                    )
 
     return "OK"

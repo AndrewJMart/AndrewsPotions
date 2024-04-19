@@ -86,24 +86,21 @@ def post_visits(visit_id: int, customers: list[Customer]):
 @router.post("/")
 def create_cart(new_cart: Customer):
     """ """
-    #TESTED AND WORKS V3.00
+    #TESTED AND WORKS V3.01
 
-    insert_cart_row = f"""INSERT INTO carts (customer_name, character_class, level) 
-    VALUES ('{new_cart.customer_name}', '{new_cart.character_class}', {new_cart.level})"""
-
-    cart_id_query = f"""SELECT * FROM carts 
-                        WHERE customer_name = '{new_cart.customer_name}' 
-                        AND character_class = '{new_cart.character_class}'
-                        AND level = {new_cart.level}
-                        ORDER BY cart_id DESC LIMIT 1"""
-
-        # Execute the SQL statement with parameter binding
+    insert_cart_row = """
+    INSERT INTO carts (customer_name, character_class, level) 
+    VALUES(:customer_name, :character_class, :level) returning cart_id
+    """
+    # Execute the SQL statement with parameter binding
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(insert_cart_row))
-        cart_id = connection.execute(sqlalchemy.text(cart_id_query)).fetchone().cart_id
-
+        cart_id = connection.execute(sqlalchemy.text(insert_cart_row), 
+                                     {
+                                      "customer_name": new_cart.customer_name, 
+                                      "character_class": new_cart.character_class,
+                                      "level": new_cart.level
+                                      }).scalar_one()
     return {"cart_id": cart_id}
-
 
 class CartItem(BaseModel):
     quantity: int
@@ -112,19 +109,30 @@ class CartItem(BaseModel):
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
-    #TESTED AND WORKS V3.00
+    #TESTED AND WORKS V3.01
 
-    # Grab cost per potion
-    potion_cost_query = f"""SELECT * FROM potions_table WHERE item_sku = '{item_sku}'"""
+    metadata_obj = sqlalchemy.MetaData()
+    potions_table = sqlalchemy.Table("potions_table", metadata_obj, autoload_with=db.engine)
+    cart_items = sqlalchemy.Table("cart_items", metadata_obj, autoload_with=db.engine)
+
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(potion_cost_query))
+        # Grab cost per potion
+        result = connection.execute(
+        sqlalchemy.select(potions_table).where(potions_table.c.item_sku == item_sku)
+        )
         potion_cost = result.fetchone().price
 
-    # Insert Item Quantity Along With Item_SKU and Cart_ID
-    new_cart_items_row = f"""INSERT INTO cart_items (cart_id, item_sku, quantity, cost_per_potion) 
-                         VALUES ({cart_id}, '{item_sku}', {cart_item.quantity}, {potion_cost})"""
-    with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(new_cart_items_row))
+        # Insert Item Quantity Along With Item_SKU and Cart_ID
+        cart_items_insert = [{
+                            'cart_id': cart_id, 
+                            'item_sku': item_sku, 
+                            'quantity': cart_item.quantity,
+                            'cost_per_potion': potion_cost
+                            }]
+        
+        connection.execute(
+            sqlalchemy.insert(cart_items), cart_items_insert
+            )
 
     return "OK"
 
@@ -135,27 +143,46 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
-    #Tested and works V3.00
+    #Tested and works V3.01
+
+    metadata_obj = sqlalchemy.MetaData()
+    cart_items = sqlalchemy.Table("cart_items", metadata_obj, autoload_with=db.engine)
+    potion_ledger = sqlalchemy.Table("potion_ledger", metadata_obj, autoload_with=db.engine)
+    transactions = sqlalchemy.Table("transactions", metadata_obj, autoload_with=db.engine)
 
     # Grab all items from cart_id from cart_items table
-    select_cart_items = f"SELECT * FROM cart_items WHERE cart_id = {cart_id}"
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(select_cart_items))
+        result = connection.execute(
+        sqlalchemy.select(cart_items).where(cart_items.c.cart_id == cart_id)
+        )
         all_rows = result.fetchall()
-    
         transaction_gold = 0  
+        Potion_Ledger_Insert_List = []
 
         for row in all_rows:
             # Update Potion Count in potions_ledger
-            insert_into_ledger = f"""INSERT INTO potion_ledger (item_sku, quantity) 
-                            VALUES ('{row.item_sku}', {-1 * row.quantity})"""
-            connection.execute(sqlalchemy.text(insert_into_ledger))
-
+            ledger_row = {
+                'item_sku': row.item_sku, 
+                'quantity': row.quantity
+                          }
+            Potion_Ledger_Insert_List.append(ledger_row)
+            
             # Sum up gold from transaction
             transaction_gold += row.quantity * row.cost_per_potion
 
-        insert_cart_transaction = f"""INSERT INTO transactions (gold, red_ml, green_ml, blue_ml, dark_ml) 
-        VALUES ({transaction_gold}, 0, 0, 0, 0)"""
-        result = connection.execute(sqlalchemy.text(insert_cart_transaction))
+        connection.execute(
+            sqlalchemy.insert(potion_ledger), Potion_Ledger_Insert_List
+            )
+
+        insert_cart_transaction = [{
+            'gold': transaction_gold,
+            'red_ml': 0,
+            'green_ml': 0,
+            'blue_ml': 0,
+            'dark_ml': 0
+        }]
+        connection.execute(
+            sqlalchemy.insert(transactions), insert_cart_transaction
+            )
 
     return "OK"

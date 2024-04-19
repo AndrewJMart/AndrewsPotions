@@ -16,7 +16,7 @@ class PotionInventory(BaseModel):
     quantity: int
 
 def get_current_ml_totals():
-    #TESTED AND WORKS V3.00
+    #TESTED AND WORKS V3.01
     # Grab initial gold / Mls
     initial_query = """
     SELECT 
@@ -49,13 +49,19 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     """ """
     print(f"potions delievered: {potions_delivered} order_id: {order_id}")
 
-    # Tested and Works V3.00
+    # Tested and Works V3.01
+    metadata_obj = sqlalchemy.MetaData()
+    potion_ledger = sqlalchemy.Table("potion_ledger", metadata_obj, autoload_with=db.engine)
+    transactions = sqlalchemy.Table("transactions", metadata_obj, autoload_with=db.engine)
+
     with db.engine.begin() as connection:
         current_red_ml = 0
         current_green_ml = 0
         current_blue_ml = 0
         current_dark_ml = 0
-        # Loop through delivered potions and update current values
+
+        # Create Potion Insert Dictionary
+        potion_dictionary_list = []
         for potion in potions_delivered:
             potion_name = f"{potion.potion_type[0]}_{potion.potion_type[1]}_{potion.potion_type[2]}_{potion.potion_type[3]}"
 
@@ -65,15 +71,28 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
             current_blue_ml -= potion.potion_type[2] * potion.quantity
             current_dark_ml -= potion.potion_type[3] * potion.quantity
 
-            # Insert Into Potion Ledger
-            insert_into_ledger = f"""INSERT INTO potion_ledger (item_sku, quantity) 
-                            VALUES ('{potion_name}', {potion.quantity})"""
-            connection.execute(sqlalchemy.text(insert_into_ledger))
+            # Insert Into Potion_Dictionary and append to list
+            potion_dictionary_list.append({'item_sku': potion_name, 'quantity': potion.quantity})
+
+        # Insert Potions Into Ledger
+        connection.execute(
+            sqlalchemy.insert(potion_ledger), potion_dictionary_list
+            )
 
         # Update RGB ML in ledger
-        insert_bottle_transaction = f"""INSERT INTO transactions (gold, red_ml, green_ml, blue_ml, dark_ml) 
-        VALUES (0, {current_red_ml}, {current_green_ml}, {current_blue_ml}, {current_dark_ml})"""
-        result = connection.execute(sqlalchemy.text(insert_bottle_transaction))
+        transaction_insert = [
+            {
+             'gold': 0,
+             'red_ml': current_red_ml,
+             'green_ml': current_green_ml,
+             'blue_ml': current_blue_ml,
+             'dark_ml': current_dark_ml
+            }
+        ]
+        connection.execute(
+            sqlalchemy.insert(transactions), transaction_insert
+            )
+
         
     return "OK"
 
@@ -82,9 +101,7 @@ def get_bottle_plan():
     """
     Go from barrel to bottle.
     """
-
-    # TESTED AND WORKS V3.00
-
+    # TESTED AND WORKS V3.01
     # Query Current MLs
     red_ml, green_ml, blue_ml, dark_ml = get_current_ml_totals()
 
@@ -94,13 +111,13 @@ def get_bottle_plan():
     # Begin Connection To Database
     with db.engine.begin() as connection:
         # Grab Existing Quantity Of Potions
-        select_stocked_potions = f"SELECT SUM(quantity) as total_potions FROM potion_ledger"
+        select_stocked_potions = "SELECT SUM(quantity) as total_potions FROM potion_ledger"
         result = connection.execute(sqlalchemy.text(select_stocked_potions))
         all_rows = result.fetchone()
         total_potions = all_rows.total_potions
 
         # Grab Max Potions
-        max_potion_query = f"SELECT * FROM global_inventory"
+        max_potion_query = "SELECT * FROM global_inventory"
         result = connection.execute(sqlalchemy.text(max_potion_query))
         row_one = result.fetchone()
         max_potions = row_one.max_potions

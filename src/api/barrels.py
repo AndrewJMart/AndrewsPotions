@@ -25,7 +25,10 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     """ """
     print(f"barrels delievered: {barrels_delivered} order_id: {order_id}")
 
-    #TESTED AND WORKS V3.00
+    #TESTED AND WORKS V3.01
+
+    metadata_obj = sqlalchemy.MetaData()
+    transactions = sqlalchemy.Table("transactions", metadata_obj, autoload_with=db.engine)
 
     gold = 0
     num_of_red_ml = 0
@@ -51,10 +54,19 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
             num_of_dark_ml += barrel.ml_per_barrel * barrel.quantity
 
     # Now update the global_inventory to reflect new values
-    insert_barrel_transaction = f"""INSERT INTO transactions (gold, red_ml, green_ml, blue_ml, dark_ml) 
-    VALUES ({gold}, {num_of_red_ml}, {num_of_green_ml}, {num_of_blue_ml}, {num_of_dark_ml})"""
+    transaction_insert = [
+            {
+             'gold': gold,
+             'red_ml': num_of_red_ml,
+             'green_ml': num_of_green_ml,
+             'blue_ml': num_of_blue_ml,
+             'dark_ml': num_of_dark_ml
+            }
+        ]
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(insert_barrel_transaction))
+        connection.execute(
+            sqlalchemy.insert(transactions), transaction_insert
+            )
 
     return "OK"
 
@@ -62,7 +74,7 @@ def ml_per_gold(barrel):
     return barrel.ml_per_barrel / barrel.price
 
 def get_current_gold():
-    #TESTED AND WORKS V3.00
+    #TESTED AND WORKS V3.01
     with db.engine.begin() as connection:
         # Grab initial gold / Mls
         initial_query = """
@@ -81,7 +93,7 @@ def get_current_gold():
     return current_gold
 
 def get_current_ml_totals():
-    #TESTED AND WORKS V3.00
+    #TESTED AND WORKS V3.01
     with db.engine.begin() as connection:
         # Grab initial gold / Mls
         initial_query = """
@@ -110,7 +122,7 @@ def get_current_ml_totals():
     return current_red_ml, current_green_ml, current_blue_ml, current_dark_ml
 
 def find_max_purchasable_amount(barrel, current_gold, current_ml, max_ml):
-    #TESTED AND WORKS V3.00
+    #TESTED AND WORKS V3.01
     max_purchasable_amount = 1  # At least one barrel can be purchased
     for i in range(2, barrel.quantity + 1):
         quantity_price = barrel.price * i
@@ -122,7 +134,7 @@ def find_max_purchasable_amount(barrel, current_gold, current_ml, max_ml):
     return max_purchasable_amount
 
 def purchase_barrels(catalog, ml_type, current_gold, current_ml, max_ml):
-    #TESTED AND WORKS V3.00
+    #TESTED AND WORKS V3.01
     barrel_purchase_list = []
     for barrel in catalog:    
         if barrel.potion_type[ml_type] == 1 and current_gold >= barrel.price and "MINI" not in barrel.sku and current_ml + barrel.ml_per_barrel <= max_ml:
@@ -143,7 +155,7 @@ def purchase_barrels(catalog, ml_type, current_gold, current_ml, max_ml):
 @router.post("/plan")
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
-    #TESTED AND WORKS V3.00
+    #TESTED AND WORKS V3.01
 
     # Benchmarks used for barrel purchasing
     with db.engine.begin() as connection:
