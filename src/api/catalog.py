@@ -11,7 +11,7 @@ def get_catalog():
     Each unique item combination must have only a single price.
     """
 
-    #TESTED AND WORKS V2.2
+    #TESTED AND WORKS V3.00
 
     # Grab all available potions for catalog
     select_stocked_potions = f"""SELECT item_sku, SUM(quantity) AS total_potions FROM potion_ledger GROUP BY item_sku"""
@@ -37,7 +37,7 @@ def get_catalog():
                         "name": potion_metadata.item_sku,
                         "quantity": row.total_potions,
                         "price": potion_metadata.price,
-                        "potion_type": [potion_metadata.red, potion_metadata.green, potion_metadata.blue, 0],
+                        "potion_type": [potion_metadata.red, potion_metadata.green, potion_metadata.blue, potion_metadata.dark],
                     })
     
     return catalog_listing

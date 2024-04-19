@@ -37,7 +37,8 @@ def get_current_ml_totals():
         SELECT 
             SUM(red_ml) AS total_red_ml,
             SUM(green_ml) AS total_green_ml,
-            SUM(blue_ml) AS total_blue_ml
+            SUM(blue_ml) AS total_blue_ml,
+            SUM(dark_ml) AS total_dark_ml        
         FROM transactions
         """
         result = connection.execute(sqlalchemy.text(initial_query))
@@ -48,21 +49,23 @@ def get_current_ml_totals():
             current_red_ml = first_row.total_red_ml
             current_green_ml = first_row.total_green_ml
             current_blue_ml = first_row.total_blue_ml
+            current_dark_ml = first_row.total_dark_ml
         else:
             current_red_ml = 0
             current_green_ml = 0
             current_blue_ml = 0
+            current_blue_ml = 0
 
-    return current_red_ml, current_green_ml, current_blue_ml
+    return current_red_ml, current_green_ml, current_blue_ml, current_dark_ml
 
 @router.get("/audit")
 def get_inventory():
     """ """
 
-    #TESTED AND WORKS WITH V2.1
+    #TESTED AND WORKS WITH V3.00
     current_gold = get_current_gold()
-    red_ml, green_ml, blue_ml = get_current_ml_totals()
-    total_ml = red_ml + green_ml + blue_ml
+    red_ml, green_ml, blue_ml, dark_ml = get_current_ml_totals()
+    total_ml = red_ml + green_ml + blue_ml + dark_ml
 
     #Query Potions Table to grab current amount of potion quantity
     potion_sum_query = "SELECT SUM(quantity) AS total_potions FROM potion_ledger"
@@ -77,7 +80,6 @@ def get_inventory():
 
     return {"number_of_potions": total_potions, "ml_in_barrels": total_ml, "gold": current_gold}
 
-
 # Gets called once a day
 @router.post("/plan")
 def get_capacity_plan():
@@ -85,11 +87,20 @@ def get_capacity_plan():
     Start with 1 capacity for 50 potions and 1 capacity for 10000 ml of potion. Each additional 
     capacity unit costs 1000 gold.
     """
+    # Tested And Works V3.00
+    # Grab Current Gold
+    current_gold = get_current_gold()
 
-    return {
-        "potion_capacity": 0,
-        "ml_capacity": 0
+    if current_gold >= 5000:
+        return {
+            "potion_capacity": 50,
+            "ml_capacity": 10000
         }
+    else:
+        return {
+            "potion_capacity": 0,
+            "ml_capacity": 0
+            }
 
 class CapacityPurchase(BaseModel):
     potion_capacity: int
@@ -102,5 +113,29 @@ def deliver_capacity_plan(capacity_purchase : CapacityPurchase, order_id: int):
     Start with 1 capacity for 50 potions and 1 capacity for 10000 ml of potion. Each additional 
     capacity unit costs 1000 gold.
     """
+    # Tested And Works V3.00
+    with db.engine.begin() as connection:
+        # Process Transaction
+        insert_cart_transaction = f"""INSERT INTO transactions (gold, red_ml, green_ml, blue_ml, dark_ml) 
+        VALUES (-2000, 0, 0, 0, 0)"""
+        result = connection.execute(sqlalchemy.text(insert_cart_transaction))
+
+        # Get Current Max Potions / Max ML
+        query_global_inventory = f""" SELECT * FROM global_inventory
+        """
+        result = connection.execute(sqlalchemy.text(query_global_inventory))
+        row_one = result.fetchone()
+        current_max_ml = row_one.max_ml
+        current_max_potions = row_one.max_potions
+
+        # Update Max Potions
+        update_max_potions = f"""UPDATE global_inventory SET max_potions = {current_max_potions + capacity_purchase.potion_capacity}
+        """
+        result = connection.execute(sqlalchemy.text(update_max_potions))
+
+        #Update Max ML
+        update_max_ml = f"""UPDATE global_inventory SET max_ml = {current_max_ml + capacity_purchase.ml_capacity}
+        """
+        result = connection.execute(sqlalchemy.text(update_max_ml))
 
     return "OK"

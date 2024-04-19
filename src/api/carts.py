@@ -68,7 +68,6 @@ def search_orders(
         ],
     }
 
-
 class Customer(BaseModel):
     customer_name: str
     character_class: str
@@ -87,8 +86,7 @@ def post_visits(visit_id: int, customers: list[Customer]):
 @router.post("/")
 def create_cart(new_cart: Customer):
     """ """
-
-    #TESTED AND WORKS V2.1
+    #TESTED AND WORKS V3.00
 
     insert_cart_row = f"""INSERT INTO carts (customer_name, character_class, level) 
     VALUES ('{new_cart.customer_name}', '{new_cart.character_class}', {new_cart.level})"""
@@ -114,8 +112,7 @@ class CartItem(BaseModel):
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
-
-    #TESTED AND WORKS V2.1
+    #TESTED AND WORKS V3.00
 
     # Grab cost per potion
     potion_cost_query = f"""SELECT * FROM potions_table WHERE item_sku = '{item_sku}'"""
@@ -138,8 +135,7 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
-
-    #Tested and works V2.1
+    #Tested and works V3.00
 
     # Grab all items from cart_id from cart_items table
     select_cart_items = f"SELECT * FROM cart_items WHERE cart_id = {cart_id}"
@@ -158,8 +154,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             # Sum up gold from transaction
             transaction_gold += row.quantity * row.cost_per_potion
 
-        insert_cart_transaction = f"""INSERT INTO transactions (gold, red_ml, green_ml, blue_ml) 
-        VALUES ({transaction_gold}, 0, 0, 0)"""
+        insert_cart_transaction = f"""INSERT INTO transactions (gold, red_ml, green_ml, blue_ml, dark_ml) 
+        VALUES ({transaction_gold}, 0, 0, 0, 0)"""
         result = connection.execute(sqlalchemy.text(insert_cart_transaction))
 
     return "OK"
