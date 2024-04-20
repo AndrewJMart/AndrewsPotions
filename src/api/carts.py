@@ -163,7 +163,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             # Update Potion Count in potions_ledger
             ledger_row = {
                 'item_sku': row.item_sku, 
-                'quantity': row.quantity
+                'quantity': -1 * row.quantity
                           }
             Potion_Ledger_Insert_List.append(ledger_row)
             
