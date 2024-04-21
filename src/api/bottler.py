@@ -157,8 +157,8 @@ def get_bottle_plan():
         else:
             blue_poss = blue_ml // blue_per_potion
 
-        # Find the minimum number of potions to make, capped at 10
-        potions_to_make = min(dark_poss, red_poss, green_poss, blue_poss, 10)
+        # Find the minimum number of potions to make, capped at 30
+        potions_to_make = min(dark_poss, red_poss, green_poss, blue_poss, 30)
 
         # Ensure potions don't exceed max_potions
         if potions_to_make + total_potions > max_potions:
