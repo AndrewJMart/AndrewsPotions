@@ -91,7 +91,7 @@ def get_capacity_plan():
     # Grab Current Gold
     current_gold = get_current_gold()
 
-    if current_gold >= 5000:
+    if current_gold >= 3000:
         return {
             "potion_capacity": 50,
             "ml_capacity": 10000

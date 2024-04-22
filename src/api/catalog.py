@@ -32,12 +32,13 @@ def get_catalog():
                 potion_metadata = result.fetchone()
 
             # If potion is not already listed
-            catalog_listing.append({
-                        "sku": potion_metadata.item_sku,
-                        "name": potion_metadata.item_sku,
-                        "quantity": row.total_potions,
-                        "price": potion_metadata.price,
-                        "potion_type": [potion_metadata.red, potion_metadata.green, potion_metadata.blue, potion_metadata.dark],
-                    })
+            if len(catalog_listing) < 6:
+                catalog_listing.append({
+                            "sku": potion_metadata.item_sku,
+                            "name": potion_metadata.item_sku,
+                            "quantity": row.total_potions,
+                            "price": potion_metadata.price,
+                            "potion_type": [potion_metadata.red, potion_metadata.green, potion_metadata.blue, potion_metadata.dark],
+                        })
     
     return catalog_listing
