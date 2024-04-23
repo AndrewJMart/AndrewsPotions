@@ -93,8 +93,8 @@ def get_capacity_plan():
 
     if current_gold >= 3000:
         return {
-            "potion_capacity": 50,
-            "ml_capacity": 10000
+            "potion_capacity": 1,
+            "ml_capacity": 1
         }
     else:
         return {
@@ -122,22 +122,13 @@ def deliver_capacity_plan(capacity_purchase : CapacityPurchase, order_id: int):
 
         # Update Max Potions
         update_max_potions = """UPDATE global_inventory 
-                             SET max_potions = global_inventory.max_potions + :potion_capacity"""
+                             SET max_potions = global_inventory.max_potions + 50"""
         
-        result = connection.execute(sqlalchemy.text(update_max_potions), 
-                                    {
-                                     'potion_capacity': capacity_purchase.potion_capacity   
-                                    }
-                                    )
+        result = connection.execute(sqlalchemy.text(update_max_potions))
 
         # Update Max ML
         update_max_ml = """UPDATE global_inventory 
-                             SET max_ml = global_inventory.max_ml + :ml_capacity"""
+                             SET max_ml = global_inventory.max_ml + 10000"""
         
-        result = connection.execute(sqlalchemy.text(update_max_ml), 
-                                    {
-                                     'ml_capacity': capacity_purchase.ml_capacity   
-                                    }
-                                    )
-
+        result = connection.execute(sqlalchemy.text(update_max_ml))
     return "OK"
