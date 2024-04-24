@@ -157,6 +157,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
     #TESTED AND WORKS V3.01
 
+    
+
     # Benchmarks used for barrel purchasing
     with db.engine.begin() as connection:
         initial_query = "SELECT * FROM global_inventory"
@@ -186,6 +188,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     # Sort catalog on ML_Per_Barrel
     sorted_wholesale_catalog = sorted(wholesale_catalog, key=ml_per_gold, reverse= True)
     print(sorted_wholesale_catalog)
+
+    # Loop through catalog, query for the latest tick_id assign that tick id to each bottle
 
     # Benchmark Eval - If Shop is below gold_benchmark (1000) only purchase green barrels
     if current_gold < gold_benchmark:

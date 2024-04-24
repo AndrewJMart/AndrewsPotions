@@ -165,7 +165,6 @@ def get_bottle_plan():
             potions_to_make = max_potions - total_potions
 
         # Update Total Potions And ML Levels
-        #Total Potions
         total_potions += potions_to_make
         #ML
         red_ml -= red_per_potion * potions_to_make

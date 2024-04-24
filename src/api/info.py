@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from src.api import auth
+import sqlalchemy
+from src import database as db
 
 router = APIRouter(
     prefix="/info",
@@ -17,5 +19,18 @@ def post_time(timestamp: Timestamp):
     """
     Share current time.
     """
+    
+    insert_tick_row = """
+    INSERT INTO ticks (day, hour) 
+    VALUES(:day, :hour)
+    """
+    # Execute the SQL statement with parameter binding
+    with db.engine.begin() as connection:
+        insert_tick = connection.execute(sqlalchemy.text(insert_tick_row), 
+                                     {
+                                      "day": timestamp.day, 
+                                      "hour": timestamp.hour
+                                      })
+
     return "OK"
 
