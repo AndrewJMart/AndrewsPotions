@@ -189,10 +189,13 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     metadata_obj = sqlalchemy.MetaData()
     barrel_tracker = sqlalchemy.Table("barrel_tracker", metadata_obj, autoload_with=db.engine)
     with db.engine.begin() as connection:
-        #Grab Current Tick ID
+        # Grab Current Tick
         grab_latest_tick =  "SELECT MAX(tick_id) AS max_tick_id FROM ticks"
-        result = connection.execute(sqlalchemy.select(grab_latest_tick))
+        result = connection.execute(
+        sqlalchemy.text(grab_latest_tick)
+        )
         tick_id = result.fetchone().max_tick_id
+
 
         # Track All Barrels Offered In Catalog
         barrel_tracker_list = []
