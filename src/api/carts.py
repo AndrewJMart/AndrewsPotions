@@ -87,7 +87,7 @@ def post_visits(visit_id: int, customers: list[Customer]):
     # Grab Current Tick 
     with db.engine.begin() as connection:
         # Grab Current Tick
-        grab_latest_tick =  "SELECT MAX(tick_id) AS max_tick_id, day FROM ticks"
+        grab_latest_tick =  "SELECT MAX(tick_id) AS max_tick_id FROM ticks"
 
         result = connection.execute(
         sqlalchemy.select(grab_latest_tick)
