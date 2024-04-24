@@ -26,7 +26,6 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     print(f"barrels delievered: {barrels_delivered} order_id: {order_id}")
 
     #TESTED AND WORKS V3.01
-
     metadata_obj = sqlalchemy.MetaData()
     transactions = sqlalchemy.Table("transactions", metadata_obj, autoload_with=db.engine)
 
@@ -157,8 +156,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
     #TESTED AND WORKS V3.01
 
-    
-
     # Benchmarks used for barrel purchasing
     with db.engine.begin() as connection:
         initial_query = "SELECT * FROM global_inventory"
@@ -189,7 +186,33 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     sorted_wholesale_catalog = sorted(wholesale_catalog, key=ml_per_gold, reverse= True)
     print(sorted_wholesale_catalog)
 
-    # Loop through catalog, query for the latest tick_id assign that tick id to each bottle
+    metadata_obj = sqlalchemy.MetaData()
+    barrel_tracker = sqlalchemy.Table("barrel_tracker", metadata_obj, autoload_with=db.engine)
+    with db.engine.begin() as connection:
+        #Grab Current Tick ID
+        grab_latest_tick =  "SELECT MAX(tick_id) AS max_tick_id FROM ticks"
+        result = connection.execute(sqlalchemy.select(grab_latest_tick))
+        tick_id = result.fetchone().max_tick_id
+
+        # Track All Barrels Offered In Catalog
+        barrel_tracker_list = []
+        for barrel in sorted_wholesale_catalog:
+            barrel_tracker_list.append({
+                'sku': barrel.sku,
+                'ml_per_barrel': barrel.ml_per_barrel,
+                'red_barrel': barrel.potion_type[0],
+                'green_barrel': barrel.potion_type[1],
+                'blue_barrel': barrel.potion_type[2],
+                'dark_barrel': barrel.potion_type[3],
+                'quantity': barrel.quantity,
+                'tick_id': tick_id
+            })
+
+        # Insert Barrels Into barrel_tracker table
+        connection.execute(
+            sqlalchemy.insert(barrel_tracker), barrel_tracker_list
+            )
+
 
     # Benchmark Eval - If Shop is below gold_benchmark (1000) only purchase green barrels
     if current_gold < gold_benchmark:

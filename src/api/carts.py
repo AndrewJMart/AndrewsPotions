@@ -80,6 +80,49 @@ def post_visits(visit_id: int, customers: list[Customer]):
     """
     print(customers)
 
+
+    metadata_obj = sqlalchemy.MetaData()
+    visits_table = sqlalchemy.Table("visits", metadata_obj, autoload_with=db.engine)
+
+    # Grab Current Tick 
+    with db.engine.begin() as connection:
+        # Grab Current Tick
+        grab_latest_tick =  "SELECT MAX(tick_id) AS max_tick_id, day FROM ticks"
+
+        result = connection.execute(
+        sqlalchemy.select(grab_latest_tick)
+        )
+
+        tick_id = result.fetchone().max_tick_id
+    
+        # Select List Of All Customers Today
+        grab_today_customers = f"SELECT visitor_name FROM visits where tick_id = {tick_id}"
+        result = connection.execute(sqlalchemy.select(grab_today_customers))
+
+        visitor_list = result.fetchall()
+
+        if visitor_list:
+            visitor_name_list = [row.visitor_name for row in result.fetchall()]
+        else:
+            visitor_name_list = []
+        
+        insert_visitors_list = []
+        
+        for visitor in customers:
+            if visitor.customer_name not in visitor_name_list:
+                # Add visitor to list
+                visitor_row = {'visitor_name': visitor.customer_name,
+                                'visitor_class': visitor.character_class,
+                                'level': visitor.level,
+                                'tick_id': tick_id
+                                }
+                insert_visitors_list.append(visitor_row)
+
+        # Insert All New Customers
+        connection.execute(
+            sqlalchemy.insert(visits_table), insert_visitors_list
+            )
+
     return "OK"
 
 
@@ -92,7 +135,6 @@ def create_cart(new_cart: Customer):
     INSERT INTO carts (customer_name, character_class, level) 
     VALUES(:customer_name, :character_class, :level) returning cart_id
     """
-    # Execute the SQL statement with parameter binding
     with db.engine.begin() as connection:
         cart_id = connection.execute(sqlalchemy.text(insert_cart_row), 
                                      {
@@ -150,12 +192,23 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     potion_ledger = sqlalchemy.Table("potion_ledger", metadata_obj, autoload_with=db.engine)
     transactions = sqlalchemy.Table("transactions", metadata_obj, autoload_with=db.engine)
 
+
     # Grab all items from cart_id from cart_items table
     with db.engine.begin() as connection:
         result = connection.execute(
         sqlalchemy.select(cart_items).where(cart_items.c.cart_id == cart_id)
         )
         all_rows = result.fetchall()
+        
+        # Grab Current Tick
+        grab_latest_tick =  "SELECT MAX(tick_id) AS max_tick_id FROM ticks"
+
+        result = connection.execute(
+        sqlalchemy.select(grab_latest_tick)
+        )
+
+        tick_id = result.fetchone().max_tick_id
+        
         transaction_gold = 0  
         Potion_Ledger_Insert_List = []
 
@@ -163,7 +216,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             # Update Potion Count in potions_ledger
             ledger_row = {
                 'item_sku': row.item_sku, 
-                'quantity': -1 * row.quantity
+                'quantity': -1 * row.quantity,
+                'tick_id': tick_id
                           }
             Potion_Ledger_Insert_List.append(ledger_row)
             
@@ -179,7 +233,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             'red_ml': 0,
             'green_ml': 0,
             'blue_ml': 0,
-            'dark_ml': 0
+            'dark_ml': 0,
+            'tick_id': tick_id
         }]
         connection.execute(
             sqlalchemy.insert(transactions), insert_cart_transaction
