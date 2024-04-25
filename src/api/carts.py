@@ -132,17 +132,31 @@ def create_cart(new_cart: Customer):
     """ """
     #TESTED AND WORKS V4.00
 
+    # Insert Cart Row Query
     insert_cart_row = """
-    INSERT INTO carts (customer_name, character_class, level) 
-    VALUES(:customer_name, :character_class, :level) returning cart_id
+    INSERT INTO carts (customer_name, character_class, level, tick_id) 
+    VALUES(:customer_name, :character_class, :level, :tick_id) returning cart_id
     """
+
+    # Grab Current Tick
+    grab_latest_tick =  "SELECT MAX(tick_id) AS max_tick_id FROM ticks"
+
     with db.engine.begin() as connection:
+
+        result = connection.execute(
+        sqlalchemy.text(grab_latest_tick)
+        )
+
+        tick_id = result.fetchone().max_tick_id
+    
         cart_id = connection.execute(sqlalchemy.text(insert_cart_row), 
                                      {
                                       "customer_name": new_cart.customer_name, 
                                       "character_class": new_cart.character_class,
-                                      "level": new_cart.level
+                                      "level": new_cart.level,
+                                      "tick_id": tick_id
                                       }).scalar_one()
+
     return {"cart_id": cart_id}
 
 class CartItem(BaseModel):
