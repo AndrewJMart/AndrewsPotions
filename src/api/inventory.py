@@ -13,6 +13,7 @@ router = APIRouter(
 )
 
 def get_current_gold():
+    #TESTED AND WORKS V4.00
     with db.engine.begin() as connection:
         # Grab initial gold / Mls
         initial_query = """
@@ -31,6 +32,7 @@ def get_current_gold():
     return current_gold
 
 def get_current_ml_totals():
+    #TESTED AND WORKS V4.00
     with db.engine.begin() as connection:
         # Grab initial gold / Mls
         initial_query = """
@@ -62,7 +64,7 @@ def get_current_ml_totals():
 def get_inventory():
     """ """
 
-    #TESTED AND WORKS WITH V3.01
+    #TESTED AND WORKS V4.00
     current_gold = get_current_gold()
     red_ml, green_ml, blue_ml, dark_ml = get_current_ml_totals()
     total_ml = red_ml + green_ml + blue_ml + dark_ml
@@ -87,7 +89,7 @@ def get_capacity_plan():
     Start with 1 capacity for 50 potions and 1 capacity for 10000 ml of potion. Each additional 
     capacity unit costs 1000 gold.
     """
-    # Tested And Works V3.01
+    #TESTED AND WORKS V4.00
     # Grab Current Gold
     current_gold = get_current_gold()
 
@@ -113,7 +115,7 @@ def deliver_capacity_plan(capacity_purchase : CapacityPurchase, order_id: int):
     Start with 1 capacity for 50 potions and 1 capacity for 10000 ml of potion. Each additional 
     capacity unit costs 1000 gold.
     """
-    # Tested And Works V3.01
+    #TESTED AND WORKS V4.00
     with db.engine.begin() as connection:
         # Process Transaction
         insert_cart_transaction = f"""INSERT INTO transactions (gold, red_ml, green_ml, blue_ml, dark_ml) 

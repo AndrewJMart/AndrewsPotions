@@ -80,6 +80,7 @@ def post_visits(visit_id: int, customers: list[Customer]):
     """
     print(customers)
 
+    #TESTED AND WORKS V4.00
 
     metadata_obj = sqlalchemy.MetaData()
     visits_table = sqlalchemy.Table("visits", metadata_obj, autoload_with=db.engine)
@@ -129,7 +130,7 @@ def post_visits(visit_id: int, customers: list[Customer]):
 @router.post("/")
 def create_cart(new_cart: Customer):
     """ """
-    #TESTED AND WORKS V3.01
+    #TESTED AND WORKS V4.00
 
     insert_cart_row = """
     INSERT INTO carts (customer_name, character_class, level) 
@@ -151,7 +152,7 @@ class CartItem(BaseModel):
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
-    #TESTED AND WORKS V3.01
+    #TESTED AND WORKS V4.00
 
     metadata_obj = sqlalchemy.MetaData()
     potions_table = sqlalchemy.Table("potions_table", metadata_obj, autoload_with=db.engine)
@@ -185,7 +186,7 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
-    #Tested and works V3.01
+    #TESTED AND WORKS V4.00
 
     metadata_obj = sqlalchemy.MetaData()
     cart_items = sqlalchemy.Table("cart_items", metadata_obj, autoload_with=db.engine)

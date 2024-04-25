@@ -16,7 +16,7 @@ class PotionInventory(BaseModel):
     quantity: int
 
 def get_current_ml_totals():
-    #TESTED AND WORKS V3.01
+    #TESTED AND WORKS V4.00
     # Grab initial gold / Mls
     initial_query = """
     SELECT 
@@ -49,7 +49,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     """ """
     print(f"potions delievered: {potions_delivered} order_id: {order_id}")
 
-    # Tested and Works V3.01
+    #TESTED AND WORKS V4.00
     metadata_obj = sqlalchemy.MetaData()
     potion_ledger = sqlalchemy.Table("potion_ledger", metadata_obj, autoload_with=db.engine)
     transactions = sqlalchemy.Table("transactions", metadata_obj, autoload_with=db.engine)
@@ -101,7 +101,7 @@ def get_bottle_plan():
     """
     Go from barrel to bottle.
     """
-    # TESTED AND WORKS V3.01
+    #TESTED AND WORKS V4.00
     # Query Current MLs
     red_ml, green_ml, blue_ml, dark_ml = get_current_ml_totals()
 

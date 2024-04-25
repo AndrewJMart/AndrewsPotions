@@ -20,6 +20,8 @@ def post_time(timestamp: Timestamp):
     Share current time.
     """
     
+    #TESTED AND WORKS V4.00
+
     insert_tick_row = """
     INSERT INTO ticks (day, hour) 
     VALUES(:day, :hour)
