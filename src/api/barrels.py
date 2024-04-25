@@ -135,18 +135,19 @@ def find_max_purchasable_amount(barrel, current_gold, current_ml, max_ml):
 def purchase_barrels(catalog, ml_type, current_gold, current_ml, max_ml):
     #TESTED AND WORKS V4.00
     barrel_purchase_list = []
-    for barrel in catalog:    
-        if barrel.potion_type[ml_type] == 1 and current_gold >= barrel.price and "MINI" not in barrel.sku and current_ml + barrel.ml_per_barrel <= max_ml:
-            # Acquire max amount of said barrel
-            max_purchase = find_max_purchasable_amount(barrel, current_gold, current_ml, max_ml)
-            current_gold -= barrel.price * max_purchase
-            current_ml += barrel.ml_per_barrel * max_purchase
-            
-            # Add max quantity amount of barrel to purchase list
-            barrel_purchase_list.append({
-                "sku": barrel.sku,
-                "quantity": max_purchase,
-            })
+    for barrel in catalog:
+        if "MINI" not in barrel.sku:
+            if barrel.potion_type[ml_type] == 1 and current_gold >= barrel.price and current_ml + barrel.ml_per_barrel <= max_ml:
+                # Acquire max amount of said barrel
+                max_purchase = find_max_purchasable_amount(barrel, current_gold, current_ml, max_ml)
+                current_gold -= barrel.price * max_purchase
+                current_ml += barrel.ml_per_barrel * max_purchase
+                
+                # Add max quantity amount of barrel to purchase list
+                barrel_purchase_list.append({
+                    "sku": barrel.sku,
+                    "quantity": max_purchase,
+                })
     
     return barrel_purchase_list
 
