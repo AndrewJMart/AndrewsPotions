@@ -118,12 +118,14 @@ def get_bottle_plan():
 
         # Grab Current Quantity Of Each Potion
         select_stock_per_potion = "SELECT item_sku, SUM(quantity) AS total_potions_per_sku FROM potion_ledger GROUP BY item_sku"
-        result = connection.execute(sqlalchemy.text(select_stocked_potions))
-        all_rows = result.fetchall()
+        stocked_potions_result = connection.execute(sqlalchemy.text(select_stock_per_potion))
+        all_stocked_potions = stocked_potions_result.fetchall()
 
+
+        # Store current stock of each potion
         potion_stock_dict = {}
-        for row in all_rows:
-            potion_stock_dict[row.item_sku] = row.total_potions
+        for potion in all_stocked_potions:
+            potion_stock_dict[potion.item_sku] = potion.total_potions_per_sku
 
 
         # Grab Max Potions
@@ -142,55 +144,56 @@ def get_bottle_plan():
     # Loop through all Potions
     for potion in all_potions_list:
         # Check to see if current potion comprises of 15% or more of total possible potions
-        if potion_stock_dict[potion.item_sku] < max_potions * .15:
-            # Required ML Per Potion
-            dark_per_potion = potion.dark
-            red_per_potion = potion.red
-            green_per_potion = potion.green
-            blue_per_potion = potion.blue
-            # Calculate Num Of Possible Potions
-            if dark_per_potion == 0:
-                dark_poss = 10000
-            else:
-                dark_poss = dark_ml // dark_per_potion
+        if potion.item_sku in potion_stock_dict.keys():
+            if potion_stock_dict[potion.item_sku] < max_potions * .15:
+                # Required ML Per Potion
+                dark_per_potion = potion.dark
+                red_per_potion = potion.red
+                green_per_potion = potion.green
+                blue_per_potion = potion.blue
+                # Calculate Num Of Possible Potions
+                if dark_per_potion == 0:
+                    dark_poss = 10000
+                else:
+                    dark_poss = dark_ml // dark_per_potion
 
-            if red_per_potion == 0:
-                red_poss = 10000
-            else:
-                red_poss = red_ml // red_per_potion
+                if red_per_potion == 0:
+                    red_poss = 10000
+                else:
+                    red_poss = red_ml // red_per_potion
 
-            if green_per_potion == 0:
-                green_poss = 10000
-            else:
-                green_poss = green_ml // green_per_potion
+                if green_per_potion == 0:
+                    green_poss = 10000
+                else:
+                    green_poss = green_ml // green_per_potion
 
-            if blue_per_potion == 0:
-                blue_poss = 10000
-            else:
-                blue_poss = blue_ml // blue_per_potion
+                if blue_per_potion == 0:
+                    blue_poss = 10000
+                else:
+                    blue_poss = blue_ml // blue_per_potion
 
-            # Find the minimum number of potions to make, capped at 30
-            potions_to_make = min(dark_poss, red_poss, green_poss, blue_poss, max_potions * .15)
+                # Find the minimum number of potions to make, capped at 30
+                potions_to_make = min(dark_poss, red_poss, green_poss, blue_poss, max_potions * .15)
 
-            # Ensure potions don't exceed max_potions
-            if potions_to_make + total_potions > max_potions:
-                potions_to_make = max_potions - total_potions
+                # Ensure potions don't exceed max_potions
+                if potions_to_make + total_potions > max_potions:
+                    potions_to_make = max_potions - total_potions
 
-            # Update Total Potions And ML Levels
-            total_potions += potions_to_make
-            #ML
-            red_ml -= red_per_potion * potions_to_make
-            green_ml -= green_per_potion * potions_to_make
-            blue_ml -= blue_per_potion * potions_to_make
-            dark_ml -= dark_per_potion * potions_to_make
+                # Update Total Potions And ML Levels
+                total_potions += potions_to_make
+                #ML
+                red_ml -= red_per_potion * potions_to_make
+                green_ml -= green_per_potion * potions_to_make
+                blue_ml -= blue_per_potion * potions_to_make
+                dark_ml -= dark_per_potion * potions_to_make
 
-            if potions_to_make > 0:
-                Bottle_Plan_List.append(
-                        {
-                            "potion_type": [red_per_potion, green_per_potion, blue_per_potion, dark_per_potion],
-                            "quantity": potions_to_make,
-                        }
-                )
+                if potions_to_make > 0:
+                    Bottle_Plan_List.append(
+                            {
+                                "potion_type": [red_per_potion, green_per_potion, blue_per_potion, dark_per_potion],
+                                "quantity": potions_to_make,
+                            }
+                    )
 
     # Return final list
     return Bottle_Plan_List
