@@ -177,7 +177,10 @@ def get_bottle_plan():
                 blue_poss = blue_ml // blue_per_potion
 
             # Find the minimum number of potions to make, capped at 30
-            potions_to_make = min(dark_poss, red_poss, green_poss, blue_poss, max_potions * .15)
+            potions_to_make = min(dark_poss, red_poss, green_poss, blue_poss, 
+                                  (max_potions * .15) - potion_stock_dict[potion.item_sku])
+            
+            potions_to_make = max(potions_to_make, 0)
 
             # Ensure potions don't exceed max_potions
             if potions_to_make + total_potions > max_potions:
@@ -185,6 +188,7 @@ def get_bottle_plan():
 
             # Update Total Potions And ML Levels
             total_potions += potions_to_make
+            
             #ML
             red_ml -= red_per_potion * potions_to_make
             green_ml -= green_per_potion * potions_to_make
