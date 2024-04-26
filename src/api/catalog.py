@@ -31,7 +31,6 @@ def get_catalog():
                 result = connection.execute(sqlalchemy.text(select_potion))
                 potion_metadata = result.fetchone()
 
-            # If potion is not already listed
             if len(catalog_listing) < 6:
                 catalog_listing.append({
                             "sku": potion_metadata.item_sku,

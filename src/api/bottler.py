@@ -195,7 +195,7 @@ def get_bottle_plan():
                 Bottle_Plan_List.append(
                         {
                             "potion_type": [red_per_potion, green_per_potion, blue_per_potion, dark_per_potion],
-                            "quantity": potions_to_make,
+                            "quantity": int(potions_to_make),
                         }
                 )
 
