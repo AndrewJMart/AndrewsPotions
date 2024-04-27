@@ -136,7 +136,7 @@ def purchase_barrels(catalog, ml_type, current_gold, current_ml, max_ml):
     #TESTED AND WORKS V4.00
     barrel_purchase_list = []
     for barrel in catalog:
-        if barrel.ml_per_barrel >= 2000:
+        if barrel.ml_per_barrel >= 500:
             if barrel.potion_type[ml_type] == 1 and current_gold >= barrel.price and current_ml + barrel.ml_per_barrel <= max_ml:
                 # Acquire max amount of said barrel
                 max_purchase = find_max_purchasable_amount(barrel, current_gold, current_ml, max_ml)
