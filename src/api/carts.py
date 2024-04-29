@@ -72,7 +72,7 @@ def search_orders(
             db.search_orders_view.c.time_stamp,
         )
         .limit(5)
-        .offset((search_page - 1) * 5)
+        .offset((int(search_page) - 1) * 5)
         .order_by(order_by, db.search_orders_view.c.cart_item_id)
     )
 
