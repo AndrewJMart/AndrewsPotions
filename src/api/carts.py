@@ -54,6 +54,8 @@ def search_orders(
     time is 5 total line items.
     """
 
+    print(f"SEARCH PAGE: {search_page}")
+
     if sort_col is search_sort_options.customer_name:
         order_by = db.search_orders_view.c.customer_name
     elif sort_col is search_sort_options.item_sku:
@@ -72,7 +74,7 @@ def search_orders(
             db.search_orders_view.c.time_stamp,
         )
         .limit(5)
-        .offset((int(search_page) - 1) * 5)
+        .offset(0)
         .order_by(order_by, db.search_orders_view.c.cart_item_id)
     )
 
