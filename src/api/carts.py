@@ -54,18 +54,53 @@ def search_orders(
     time is 5 total line items.
     """
 
+    if sort_col is search_sort_options.customer_name:
+        order_by = db.search_orders_view.c.customer_name
+    elif sort_col is search_sort_options.item_sku:
+        order_by = db.search_orders_view.c.item_sku
+    elif sort_col is search_sort_options.line_item_total:
+        order_by = sqlalchemy.desc(db.search_orders_view.c.line_item_total)
+    else:
+        order_by = sqlalchemy.desc(db.search_orders_view.c.time_stamp)
+
+    stmt = (
+        sqlalchemy.select(
+            db.search_orders_view.c.cart_item_id,
+            db.search_orders_view.c.item_sku,
+            db.search_orders_view.c.customer_name,
+            db.search_orders_view.c.line_item_total,
+            db.search_orders_view.c.time_stamp,
+        )
+        .limit(5)
+        .offset((search_page - 1) * 5)
+        .order_by(order_by, db.search_orders_view.c.cart_item_id)
+    )
+
+    # filter only if name parameter is passed
+    if customer_name != "":
+        stmt = stmt.where(db.search_orders_view.c.customer_name.ilike(f"%{customer_name}%"))
+    
+    if potion_sku != "":
+        stmt = stmt.where(db.search_orders_view.c.item_sku.ilike(f"%{potion_sku}%"))
+
+    with db.engine.connect() as conn:
+        result = conn.execute(stmt)
+        line_item_list = []
+        for row in result:
+            line_item_list.append(
+            {
+                "line_item_id": row.cart_item_id,
+                "item_sku": row.item_sku,
+                "customer_name": row.customer_name,
+                "line_item_total": row.line_item_total,
+                "timestamp": row.time_stamp,
+            }
+            )
+
     return {
         "previous": "",
         "next": "",
-        "results": [
-            {
-                "line_item_id": 1,
-                "item_sku": "1 oblivion potion",
-                "customer_name": "Scaramouche",
-                "line_item_total": 50,
-                "timestamp": "2021-01-01T00:00:00Z",
-            }
-        ],
+        "results": line_item_list,
     }
 
 class Customer(BaseModel):
@@ -81,10 +116,6 @@ def post_visits(visit_id: int, customers: list[Customer]):
     print(customers)
 
     #TESTED AND WORKS V4.00
-
-    metadata_obj = sqlalchemy.MetaData()
-    visits_table = sqlalchemy.Table("visits", metadata_obj, autoload_with=db.engine)
-
     # Grab Current Tick 
     with db.engine.begin() as connection:
         # Grab Current Tick
@@ -121,7 +152,7 @@ def post_visits(visit_id: int, customers: list[Customer]):
 
         # Insert All New Customers
         connection.execute(
-            sqlalchemy.insert(visits_table), insert_visitors_list
+            sqlalchemy.insert(db.visits_table), insert_visitors_list
             )
 
     return "OK"
@@ -167,15 +198,10 @@ class CartItem(BaseModel):
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
     #TESTED AND WORKS V4.00
-
-    metadata_obj = sqlalchemy.MetaData()
-    potions_table = sqlalchemy.Table("potions_table", metadata_obj, autoload_with=db.engine)
-    cart_items = sqlalchemy.Table("cart_items", metadata_obj, autoload_with=db.engine)
-
     with db.engine.begin() as connection:
         # Grab cost per potion
         result = connection.execute(
-        sqlalchemy.select(potions_table).where(potions_table.c.item_sku == item_sku)
+        sqlalchemy.select(db.potions_table).where(db.potions_table.c.item_sku == item_sku)
         )
         potion_cost = result.fetchone().price
 
@@ -188,7 +214,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
                             }]
         
         connection.execute(
-            sqlalchemy.insert(cart_items), cart_items_insert
+            sqlalchemy.insert(db.cart_items), cart_items_insert
             )
 
     return "OK"
@@ -201,17 +227,10 @@ class CartCheckout(BaseModel):
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
     #TESTED AND WORKS V4.00
-
-    metadata_obj = sqlalchemy.MetaData()
-    cart_items = sqlalchemy.Table("cart_items", metadata_obj, autoload_with=db.engine)
-    potion_ledger = sqlalchemy.Table("potion_ledger", metadata_obj, autoload_with=db.engine)
-    transactions = sqlalchemy.Table("transactions", metadata_obj, autoload_with=db.engine)
-
-
     # Grab all items from cart_id from cart_items table
     with db.engine.begin() as connection:
         result = connection.execute(
-        sqlalchemy.select(cart_items).where(cart_items.c.cart_id == cart_id)
+        sqlalchemy.select(db.cart_items).where(db.cart_items.c.cart_id == cart_id)
         )
         all_rows = result.fetchall()
         
@@ -239,7 +258,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             transaction_gold += row.quantity * row.cost_per_potion
 
         connection.execute(
-            sqlalchemy.insert(potion_ledger), Potion_Ledger_Insert_List
+            sqlalchemy.insert(db.potion_ledger), Potion_Ledger_Insert_List
             )
 
         insert_cart_transaction = [{
@@ -251,7 +270,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             'tick_id': tick_id
         }]
         connection.execute(
-            sqlalchemy.insert(transactions), insert_cart_transaction
+            sqlalchemy.insert(db.transactions), insert_cart_transaction
             )
 
     return "OK"

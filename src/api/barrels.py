@@ -26,9 +26,6 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     print(f"barrels delievered: {barrels_delivered} order_id: {order_id}")
 
     #TESTED AND WORKS V4.00
-    metadata_obj = sqlalchemy.MetaData()
-    transactions = sqlalchemy.Table("transactions", metadata_obj, autoload_with=db.engine)
-
     gold = 0
     num_of_red_ml = 0
     num_of_green_ml = 0
@@ -64,7 +61,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
         ]
     with db.engine.begin() as connection:
         connection.execute(
-            sqlalchemy.insert(transactions), transaction_insert
+            sqlalchemy.insert(db.transactions), transaction_insert
             )
 
     return "OK"

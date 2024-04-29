@@ -50,10 +50,6 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     print(f"potions delievered: {potions_delivered} order_id: {order_id}")
 
     #TESTED AND WORKS V4.00
-    metadata_obj = sqlalchemy.MetaData()
-    potion_ledger = sqlalchemy.Table("potion_ledger", metadata_obj, autoload_with=db.engine)
-    transactions = sqlalchemy.Table("transactions", metadata_obj, autoload_with=db.engine)
-
     with db.engine.begin() as connection:
         current_red_ml = 0
         current_green_ml = 0
@@ -76,7 +72,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
 
         # Insert Potions Into Ledger
         connection.execute(
-            sqlalchemy.insert(potion_ledger), potion_dictionary_list
+            sqlalchemy.insert(db.potion_ledger), potion_dictionary_list
             )
 
         # Update RGB ML in ledger
@@ -90,7 +86,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
             }
         ]
         connection.execute(
-            sqlalchemy.insert(transactions), transaction_insert
+            sqlalchemy.insert(db.transactions), transaction_insert
             )
 
         
