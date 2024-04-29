@@ -196,7 +196,7 @@ def get_bottle_plan():
             blue_ml -= blue_per_potion * potions_to_make
             dark_ml -= dark_per_potion * potions_to_make
 
-            if potions_to_make > 0:
+            if int(potions_to_make) > 0:
                 Bottle_Plan_List.append(
                         {
                             "potion_type": [red_per_potion, green_per_potion, blue_per_potion, dark_per_potion],
