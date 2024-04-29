@@ -61,9 +61,14 @@ def search_orders(
     elif sort_col is search_sort_options.item_sku:
         order_by = db.search_orders_view.c.item_sku
     elif sort_col is search_sort_options.line_item_total:
-        order_by = sqlalchemy.desc(db.search_orders_view.c.line_item_total)
+        order_by = db.search_orders_view.c.line_item_total
     else:
-        order_by = sqlalchemy.desc(db.search_orders_view.c.time_stamp)
+        order_by = db.search_orders_view.c.time_stamp
+
+    if sort_order is search_sort_order.asc:
+        order_by = sqlalchemy.asc(order_by)
+    else:
+        order_by = sqlalchemy.desc(order_by)
 
     stmt = (
         sqlalchemy.select(
