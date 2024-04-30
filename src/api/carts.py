@@ -99,7 +99,7 @@ def search_orders(
         if previous_page == "-1":
             previous_page = ""
         # Determine If Next Page Is Present
-        if 5 * search_page < total_rows:
+        if 5 * (search_page + 1) < total_rows:
             next_page = str(search_page + 1)
         else:
             next_page = ""
@@ -125,9 +125,11 @@ def search_orders(
         stmt = stmt.where(db.search_orders_view.c.item_sku.ilike(f"%{potion_sku}%"))
 
     with db.engine.connect() as conn:
+        row_counter = 0
         result = conn.execute(stmt)
         line_item_list = []
         for row in result:
+            row_counter += 1
             line_item_list.append(
             {
                 "line_item_id": row.cart_item_id,
