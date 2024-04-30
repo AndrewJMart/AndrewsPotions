@@ -82,16 +82,16 @@ def search_orders(
         previous_page = ""
         #Determine If Next Page Is Present
         if 5 * search_page < total_rows:
-            next_page = search_page + 1
+            next_page = str(search_page + 1)
         else:
             next_page = ""
 
     else:
         search_page = int(search_page)
-        previous_page = max(int(search_page) - 1, 0)
+        previous_page = str(max(int(search_page) - 1, 0))
         #Determine If Next Page Is Present
         if 5 * search_page < total_rows:
-            next_page = search_page + 1
+            next_page = str(search_page + 1)
         else:
             next_page = ""
 
@@ -130,8 +130,8 @@ def search_orders(
             )
 
     return {
-        "previous": f"{previous_page}",
-        "next": f"{next_page}",
+        "previous": previous_page,
+        "next": next_page,
         "results": line_item_list,
     }
 
