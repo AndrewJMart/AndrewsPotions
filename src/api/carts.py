@@ -94,9 +94,9 @@ def search_orders(
 
     else:
         search_page = int(search_page)
-        previous_page = str(max(int(search_page) - 1, 0))
+        previous_page = str(int(search_page) - 1)
         # See If Previous Page Is Possible
-        if previous_page == "0":
+        if previous_page == "-1":
             previous_page = ""
         # Determine If Next Page Is Present
         if 5 * search_page < total_rows:
