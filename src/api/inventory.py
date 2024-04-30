@@ -69,7 +69,7 @@ def get_inventory():
     red_ml, green_ml, blue_ml, dark_ml = get_current_ml_totals()
     total_ml = red_ml + green_ml + blue_ml + dark_ml
 
-    #Query Potions Table to grab current amount of potion quantity
+    # Query Potions Table to grab current amount of potion quantity
     potion_sum_query = "SELECT SUM(quantity) AS total_potions FROM potion_ledger"
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(potion_sum_query))

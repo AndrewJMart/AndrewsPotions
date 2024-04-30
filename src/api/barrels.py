@@ -49,7 +49,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
         elif barrel.potion_type[3] == 1:
             num_of_dark_ml += barrel.ml_per_barrel * barrel.quantity
 
-    # Now update the global_inventory to reflect new values
+    # Update the global_inventory to reflect new values
     transaction_insert = [
             {
              'gold': gold,
@@ -129,11 +129,11 @@ def find_max_purchasable_amount(barrel, current_gold, current_ml, max_ml):
             break  # Exit the loop if constraints are violated
     return max_purchasable_amount
 
-def purchase_barrels(catalog, ml_type, current_gold, current_ml, max_ml):
+def purchase_barrels(catalog, ml_type, current_gold, current_ml, max_ml, mlperbarrelbenchmark):
     #TESTED AND WORKS V4.00
     barrel_purchase_list = []
     for barrel in catalog:
-        if barrel.ml_per_barrel >= 500:
+        if barrel.ml_per_barrel >= mlperbarrelbenchmark:
             if barrel.potion_type[ml_type] == 1 and current_gold >= barrel.price and current_ml + barrel.ml_per_barrel <= max_ml:
                 # Acquire max amount of said barrel
                 max_purchase = find_max_purchasable_amount(barrel, current_gold, current_ml, max_ml)
@@ -170,12 +170,13 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         blue_gold_perc = first_row.blue_gold_perc
         dark_gold_perc = first_row.dark_gold_perc
         max_total_ml = first_row.max_ml
+        mlperbarrelbenchmark = first_row.ml_per_barrel_benchmark
 
-        red_ml, green_ml, blue_ml, dark_ml = get_current_ml_totals()
-        current_RGBD_ml = red_ml + blue_ml + green_ml + dark_ml
 
-        # Query Current Gold
-        current_gold = get_current_gold()
+    # Query Current ML / Gold 
+    red_ml, green_ml, blue_ml, dark_ml = get_current_ml_totals()
+    current_RGBD_ml = red_ml + blue_ml + green_ml + dark_ml
+    current_gold = get_current_gold()
     
     # Initialize empty barrel list
     barrel_purchase_list = []
@@ -184,16 +185,12 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     sorted_wholesale_catalog = sorted(wholesale_catalog, key=ml_per_gold, reverse= True)
     print(sorted_wholesale_catalog)
 
-    metadata_obj = sqlalchemy.MetaData()
-    barrel_tracker = sqlalchemy.Table("barrel_tracker", metadata_obj, autoload_with=db.engine)
+    # Track which barrels are sold at which tick
     with db.engine.begin() as connection:
         # Grab Current Tick
         grab_latest_tick =  "SELECT MAX(tick_id) AS max_tick_id FROM ticks"
-        result = connection.execute(
-        sqlalchemy.text(grab_latest_tick)
-        )
+        result = connection.execute(sqlalchemy.text(grab_latest_tick))
         tick_id = result.fetchone().max_tick_id
-
 
         # Track All Barrels Offered In Catalog
         barrel_tracker_list = []
@@ -211,18 +208,18 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
         # Insert Barrels Into barrel_tracker table
         connection.execute(
-            sqlalchemy.insert(barrel_tracker), barrel_tracker_list
+            sqlalchemy.insert(db.barrel_tracker), barrel_tracker_list
             )
-
 
     # Benchmark Eval - If Shop is below gold_benchmark (1000) only purchase green barrels
     if current_gold < gold_benchmark:
         #Implement simple selling only green potions
-        green_barrels = purchase_barrels(sorted_wholesale_catalog, 1, current_gold, green_ml, max_total_ml)
+        green_barrels = purchase_barrels(sorted_wholesale_catalog, 1, current_gold,
+                                        green_ml, max_total_ml, mlperbarrelbenchmark)
         for barrel in green_barrels:
             barrel_purchase_list.append(barrel)
     else:
-        # When shop is above gold benchmark fill in ML categories (5%,5%,5%,85%) Can Scale Later
+        # When shop is above gold benchmark fill in ML categories (30%,30%,30%,10%) Can Scale Later
         remaining_ml = max_total_ml - current_RGBD_ml
         # Assign Max ML / Gold Per Category
         # Dark 
@@ -231,7 +228,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             dark_max_ml = (remaining_ml * (dark_ml_benchmark/100)) - dark_ml
             dark_max_gold = current_gold * (dark_gold_perc/100)
             # Purchase Appropriate Dark Barrels
-            dark_barrels = purchase_barrels(sorted_wholesale_catalog, 3, dark_max_gold, dark_ml, dark_max_ml)
+            dark_barrels = purchase_barrels(sorted_wholesale_catalog, 3, dark_max_gold, 
+                                            dark_ml, dark_max_ml, mlperbarrelbenchmark)
             for barrel in dark_barrels:
                 barrel_purchase_list.append(barrel)
         # Blue
@@ -240,7 +238,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             blue_max_ml = (remaining_ml * (blue_ml_benchmark/100)) - blue_ml
             blue_max_gold = (current_gold * (blue_gold_perc/100))
             # Purchase Appropriate Dark Barrels
-            blue_barrels = purchase_barrels(sorted_wholesale_catalog, 2, blue_max_gold, blue_ml, blue_max_ml)
+            blue_barrels = purchase_barrels(sorted_wholesale_catalog, 2, blue_max_gold, 
+                                            blue_ml, blue_max_ml, mlperbarrelbenchmark)
             for barrel in blue_barrels:
                 barrel_purchase_list.append(barrel)
         # Red
@@ -249,7 +248,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             red_max_ml = (remaining_ml * (red_ml_benchmark/100)) - red_ml
             red_max_gold = (current_gold * (red_gold_perc/100))
             # Purchase Appropriate Dark Barrels
-            red_barrels = purchase_barrels(sorted_wholesale_catalog, 0, red_max_gold, red_ml, red_max_ml)
+            red_barrels = purchase_barrels(sorted_wholesale_catalog, 0, red_max_gold, 
+                                           red_ml, red_max_ml, mlperbarrelbenchmark)
             for barrel in red_barrels:
                 barrel_purchase_list.append(barrel)
         # Green
@@ -258,7 +258,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             green_max_ml = (remaining_ml * (green_ml_benchmark/100)) - green_ml
             green_max_gold = (current_gold * (green_gold_perc/100))
             # Purchase Appropriate Dark Barrels
-            green_barrels = purchase_barrels(sorted_wholesale_catalog, 1, green_max_gold, green_ml, green_max_ml)
+            green_barrels = purchase_barrels(sorted_wholesale_catalog, 1, green_max_gold, 
+                                             green_ml, green_max_ml, mlperbarrelbenchmark)
             for barrel in green_barrels:
                 barrel_purchase_list.append(barrel)
             

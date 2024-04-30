@@ -19,3 +19,4 @@ transactions = sqlalchemy.Table("transactions", metadata_obj, autoload_with=db.e
 potion_ledger = sqlalchemy.Table("potion_ledger", metadata_obj, autoload_with=db.engine)
 visits_table = sqlalchemy.Table("visits", metadata_obj, autoload_with=db.engine)
 potions_table = sqlalchemy.Table("potions_table", metadata_obj, autoload_with=db.engine)
+barrel_tracker = sqlalchemy.Table("barrel_tracker", metadata_obj, autoload_with=db.engine)
