@@ -81,13 +81,12 @@ def search_orders(
                       """
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(total_row_query))
-        total_rows = result.total_rows
-
+        total_rows = result.fetchone().total_rows
 
     if search_page != "":
         search_page = 0
         previous_page = ""
-        #Determine If Next Page Is Present
+        # Determine If Next Page Is Present
         if 5 * search_page < total_rows:
             next_page = str(search_page + 1)
         else:
@@ -96,7 +95,10 @@ def search_orders(
     else:
         search_page = int(search_page)
         previous_page = str(max(int(search_page) - 1, 0))
-        #Determine If Next Page Is Present
+        # See If Previous Page Is Possible
+        if previous_page == "0":
+            previous_page = ""
+        # Determine If Next Page Is Present
         if 5 * search_page < total_rows:
             next_page = str(search_page + 1)
         else:
