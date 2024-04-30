@@ -142,7 +142,6 @@ def search_orders(
         result = conn.execute(stmt)
         line_item_list = []
         for row in result:
-            row_counter += 1
             line_item_list.append(
             {
                 "line_item_id": row.cart_item_id,
