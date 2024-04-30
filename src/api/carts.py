@@ -75,7 +75,14 @@ def search_orders(
     # Determine Search Page
 
     # Total Number Of Rows
-    total_rows = db.session.query(func.count()).select_from(db.search_orders_view).scalar()
+    total_row_query = """
+                      SELECT COUNT(*) as total_rows 
+                      FROM search_orders_view
+                      """
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text(total_row_query))
+        total_rows = result.total_rows
+
 
     if search_page != "":
         search_page = 0
