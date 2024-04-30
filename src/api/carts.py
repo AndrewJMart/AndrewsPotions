@@ -4,6 +4,7 @@ from src.api import auth
 from enum import Enum
 import sqlalchemy
 from src import database as db
+from sqlalchemy import func
 
 router = APIRouter(
     prefix="/carts",
@@ -56,6 +57,7 @@ def search_orders(
 
     print(f"SEARCH PAGE: {search_page}")
 
+    # Determine Which Column To Sort By (And How)
     if sort_col is search_sort_options.customer_name:
         order_by = db.search_orders_view.c.customer_name
     elif sort_col is search_sort_options.item_sku:
@@ -70,6 +72,29 @@ def search_orders(
     else:
         order_by = sqlalchemy.desc(order_by)
 
+    # Determine Search Page
+
+    # Total Number Of Rows
+    total_rows = db.session.query(func.count()).select_from(db.search_orders_view).scalar()
+
+    if search_page != "":
+        search_page = 0
+        previous_page = ""
+        #Determine If Next Page Is Present
+        if 5 * search_page < total_rows:
+            next_page = search_page + 1
+        else:
+            next_page = ""
+
+    else:
+        search_page = int(search_page)
+        previous_page = max(int(search_page) - 1, 0)
+        #Determine If Next Page Is Present
+        if 5 * search_page < total_rows:
+            next_page = search_page + 1
+        else:
+            next_page = ""
+
     stmt = (
         sqlalchemy.select(
             db.search_orders_view.c.cart_item_id,
@@ -79,7 +104,7 @@ def search_orders(
             db.search_orders_view.c.time_stamp,
         )
         .limit(5)
-        .offset(0)
+        .offset(int(search_page) * 5)
         .order_by(order_by, db.search_orders_view.c.cart_item_id)
     )
 
@@ -105,8 +130,8 @@ def search_orders(
             )
 
     return {
-        "previous": "",
-        "next": "",
+        "previous": f"{previous_page}",
+        "next": f"{next_page}",
         "results": line_item_list,
     }
 
