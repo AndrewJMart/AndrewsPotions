@@ -83,7 +83,7 @@ def search_orders(
         result = connection.execute(sqlalchemy.text(total_row_query))
         total_rows = result.fetchone().total_rows
 
-    if search_page != "":
+    if search_page == "":
         search_page = 0
         previous_page = ""
         # Determine If Next Page Is Present
