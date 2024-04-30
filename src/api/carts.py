@@ -72,37 +72,20 @@ def search_orders(
     else:
         order_by = sqlalchemy.desc(order_by)
 
-    # Determine Search Page
-
-    # Total Number Of Rows
-    total_row_query = """
-                      SELECT COUNT(*) as total_rows 
-                      FROM search_orders_view
-                      """
-    with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(total_row_query))
-        total_rows = result.fetchone().total_rows
+    stmt_total_rows = (
+        sqlalchemy.select(
+            db.search_orders_view.c.cart_item_id,
+            db.search_orders_view.c.item_sku,
+            db.search_orders_view.c.customer_name,
+            db.search_orders_view.c.line_item_total,
+            db.search_orders_view.c.time_stamp,
+        )
+    )
 
     if search_page == "":
         search_page = 0
-        previous_page = ""
-        # Determine If Next Page Is Present
-        if 5 * search_page < total_rows:
-            next_page = str(search_page + 1)
-        else:
-            next_page = ""
-
     else:
         search_page = int(search_page)
-        previous_page = str(int(search_page) - 1)
-        # See If Previous Page Is Possible
-        if previous_page == "-1":
-            previous_page = ""
-        # Determine If Next Page Is Present
-        if 5 * (search_page + 1) < total_rows:
-            next_page = str(search_page + 1)
-        else:
-            next_page = ""
 
     stmt = (
         sqlalchemy.select(
@@ -113,19 +96,49 @@ def search_orders(
             db.search_orders_view.c.time_stamp,
         )
         .limit(5)
-        .offset(int(search_page) * 5)
+        .offset(search_page * 5)
         .order_by(order_by, db.search_orders_view.c.cart_item_id)
     )
 
     # filter only if name parameter is passed
     if customer_name != "":
         stmt = stmt.where(db.search_orders_view.c.customer_name.ilike(f"%{customer_name}%"))
+        stmt_total_rows = stmt_total_rows.where(db.search_orders_view.c.customer_name.ilike(f"%{customer_name}%"))
     
     if potion_sku != "":
         stmt = stmt.where(db.search_orders_view.c.item_sku.ilike(f"%{potion_sku}%"))
+        stmt_total_rows = stmt_total_rows.where(db.search_orders_view.c.item_sku.ilike(f"%{potion_sku}%"))
 
     with db.engine.connect() as conn:
-        row_counter = 0
+        # Calculate Pages
+        result_total_rows = conn.execute(stmt_total_rows)
+        total_row_table = result_total_rows.fetchall()
+        total_rows = 0
+        for row in total_row_table:
+            total_rows += 1
+        
+        # Determine Search Page
+        if search_page == 0:
+            previous_page = ""
+            # Determine If Next Page Is Present
+            if 5 * (search_page + 1) < total_rows:
+                next_page = str(search_page + 1)
+            else:
+                next_page = ""
+
+        else:
+            search_page = int(search_page)
+            previous_page = str(int(search_page) - 1)
+            # See If Previous Page Is Possible
+            if previous_page == "-1":
+                previous_page = ""
+            # Determine If Next Page Is Present
+            if 5 * (search_page + 1) < total_rows:
+                next_page = str(search_page + 1)
+            else:
+                next_page = ""
+
+
         result = conn.execute(stmt)
         line_item_list = []
         for row in result:
