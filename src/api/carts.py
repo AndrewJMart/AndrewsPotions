@@ -182,9 +182,9 @@ def post_visits(visit_id: int, customers: list[Customer]):
         tick_id = result.fetchone().max_tick_id
     
         # Select List Of All Customers Today
-        grab_today_customers = f"SELECT visitor_name FROM visits where tick_id = {tick_id}"
-        result = connection.execute(sqlalchemy.text(grab_today_customers))
-
+        result = connection.execute(
+            sqlalchemy.select(db.visits_table.c.visitor_name).where(db.visits_table.c.tick_id == tick_id)
+            )
         visitor_list = result.fetchall()
 
         if visitor_list:
