@@ -25,10 +25,10 @@ def get_catalog():
     # Iterate through each row and append this potion to catalog listing
     for row in all_rows:
         if row.total_potions > 0:
-            select_potion = f"""SELECT * FROM potions_table 
-                                    WHERE item_sku = '{row.item_sku}' """
             with db.engine.begin() as connection:
-                result = connection.execute(sqlalchemy.text(select_potion))
+                result = connection.execute(
+                sqlalchemy.select(db.potions_table).where(db.potions_table.c.item_sku == row.item_sku)
+                )
                 potion_metadata = result.fetchone()
 
             if len(catalog_listing) < 6:
@@ -39,5 +39,4 @@ def get_catalog():
                             "price": potion_metadata.price,
                             "potion_type": [potion_metadata.red, potion_metadata.green, potion_metadata.blue, potion_metadata.dark],
                         })
-    
     return catalog_listing

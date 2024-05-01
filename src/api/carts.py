@@ -227,7 +227,6 @@ def create_cart(new_cart: Customer):
     grab_latest_tick =  "SELECT MAX(tick_id) AS max_tick_id FROM ticks"
 
     with db.engine.begin() as connection:
-
         result = connection.execute(
         sqlalchemy.text(grab_latest_tick)
         )
@@ -241,7 +240,6 @@ def create_cart(new_cart: Customer):
                                       "level": new_cart.level,
                                       "tick_id": tick_id
                                       }).scalar_one()
-
     return {"cart_id": cart_id}
 
 class CartItem(BaseModel):
