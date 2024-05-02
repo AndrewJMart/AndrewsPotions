@@ -145,9 +145,9 @@ def search_orders(
             line_item_list.append(
             {
                 "line_item_id": row.cart_item_id,
-                "item_sku": row.item_sku,
+                "item_sku": str(row.quantity) + " " + row.item_sku,
                 "customer_name": row.customer_name,
-                "line_item_total": str(row.quantity) + " " + row.line_item_total,
+                "line_item_total": row.line_item_total,
                 "timestamp": row.time_stamp,
             }
             )
