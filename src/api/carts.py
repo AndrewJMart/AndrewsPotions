@@ -94,6 +94,7 @@ def search_orders(
             db.search_orders_view.c.customer_name,
             db.search_orders_view.c.line_item_total,
             db.search_orders_view.c.time_stamp,
+            db.search_orders_view.c.quantity   
         )
         .limit(5)
         .offset(search_page * 5)
@@ -146,7 +147,7 @@ def search_orders(
                 "line_item_id": row.cart_item_id,
                 "item_sku": row.item_sku,
                 "customer_name": row.customer_name,
-                "line_item_total": row.line_item_total,
+                "line_item_total": str(row.quantity) + " " + row.line_item_total,
                 "timestamp": row.time_stamp,
             }
             )
